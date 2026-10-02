@@ -59,7 +59,7 @@ icloud.com / me.com / yahoo.com / proton.me / protonmail.com
 
 ## 如何开发
 
-日常开发从 Node.js 20 LTS、pnpm 和一个独立的 Supabase 开发项目开始。首次接入时，先执行 Supabase 初始化脚本，再复制环境变量模板并填写本地开发值。开发联调和生产运行都使用 Supabase；文件后端只用于自动化测试和隔离测试。
+日常开发从 Node.js 22.13 以上、pnpm 和一个独立的 Supabase 开发项目开始。首次接入时，先执行 Supabase 初始化脚本，再复制环境变量模板并填写本地开发值。开发联调和生产运行都使用 Supabase；文件后端只用于自动化测试和隔离测试。
 
 推荐开发顺序：先在工作台创建样例简历，再进入编辑器验证表单、JSON、A4 画布和 Web 生成器。涉及 Schema、权限、发布、资源或 AI 的改动，应同步查看对应的服务端领域服务和测试。涉及页面体验的改动，应同时检查桌面端、移动端、减少动画偏好和 Preview 只读模式。
 

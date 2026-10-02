@@ -74,6 +74,7 @@ tests/e2e/                  Playwright E2E
 scripts/                    运维和开发辅助脚本
 vercel.json                 Vercel 构建声明，固定 framework 和 install/build/dev 命令
 .vercelignore               排除 .env*，保证本地密钥不进入部署包
+.nvmrc                      CI 与本地统一的 Node.js 版本，Workflow 通过 node-version-file 读取
 ```
 
 ## 3. 环境依赖
@@ -82,7 +83,7 @@ vercel.json                 Vercel 构建声明，固定 framework 和 install/b
 
 | 依赖 | 要求 | 用途 |
 | --- | --- | --- |
-| Node.js | 20.9 或更高 | 由 `package.json` 的 `engines` 声明，CI 和 Vercel 自动遵守 |
+| Node.js | 22.13 或更高 | 由 `package.json` 的 `engines` 声明下限，`.nvmrc` 固定 CI 与本地默认版本 |
 | pnpm | 11.21.0 | 安装依赖和运行工程脚本，由 `packageManager` 固定 |
 | Git 客户端 | 可访问项目仓库 | 拉取代码、创建分支和提交变更 |
 | Supabase 项目 | 独立开发项目 | 提供 Auth、PostgreSQL 和私有 Storage |
@@ -101,6 +102,9 @@ vercel.json                 Vercel 构建声明，固定 framework 和 install/b
 node --version
 pnpm --version
 ```
+
+Node.js 版本由 `.nvmrc` 统一约定，CI 通过 `node-version-file` 读取同一份配置。
+`package.json` 的 `engines.node` 声明的是可接受的**下限**，低于该版本的 pnpm 无法启动。
 
 ## 4. 本地开发环境搭建
 

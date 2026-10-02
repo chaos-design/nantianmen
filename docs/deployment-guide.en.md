@@ -84,7 +84,7 @@ Project setup:
 - Connect the Git repository during project creation.
 - Framework Preset: Next.js.
 - Root Directory: repository root.
-- Node.js Version: 20.x, or let `engines.node` in `package.json` decide.
+- Node.js Version: 22.x or later, or let `engines.node` in `package.json` decide. `pnpm@11.21.0` requires Node.js 22.13+ and fails during dependency installation on older runtimes.
 - Install, Build, and Dev commands come from `vercel.json` in the repository root; do not override them in the dashboard.
 - In Settings → Git, confirm that `main` deploys to Production and other branches and pull requests produce Preview Deployments.
 

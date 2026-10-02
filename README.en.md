@@ -62,7 +62,7 @@ immediate feedback, while `restrict_registration_email_domain` in
 
 ## How to Develop
 
-Daily development starts with Node.js 20 LTS, pnpm, and an isolated Supabase development project. For first-time setup, execute the Supabase initialization script, copy the environment template, and fill local development values. Development integration and production both use Supabase; the file backend is only for automated and isolated tests.
+Daily development starts with Node.js 22.13 or later, pnpm, and an isolated Supabase development project. For first-time setup, execute the Supabase initialization script, copy the environment template, and fill local development values. Development integration and production both use Supabase; the file backend is only for automated and isolated tests.
 
 A practical development flow is to create a sample resume in the workspace, then validate form editing, JSON editing, A4 canvas, and the web builder in the editor. Changes involving Schema, authorization, publishing, assets, or AI should be checked together with the corresponding server-side domain services and tests. Page experience changes should be reviewed on desktop, mobile, reduced motion, and Preview read-only mode.
 

@@ -54,7 +54,7 @@ scripts/                    Development and operations helpers
 
 Prerequisites:
 
-- Node.js 20 LTS or later.
+- Node.js 22.13 or later (`pnpm@11.21.0` cannot start on anything older).
 - pnpm 11.21.0.
 - A dedicated Supabase development project.
 - A confirmed administrator account in Supabase Auth.

@@ -71,7 +71,7 @@ flowchart LR
 
 | 依赖 | 要求 | 用途 |
 | --- | --- | --- |
-| Node.js | 20 LTS 或更高 | 由 `package.json` 的 `engines` 声明，Vercel 和 CI 自动遵守 |
+| Node.js | 22.13 或更高 | 由 `package.json` 的 `engines` 声明下限，Vercel 和 CI 按此选择运行时 |
 | pnpm | 使用已提交的 `pnpm-lock.yaml` | 安装依赖并保证构建可复现 |
 | Vercel Project | 已创建、已关联 GitHub 仓库 | 托管 Next.js 应用并执行自动部署 |
 | Supabase Project | 各环境独立，且已完成 Schema 初始化 | 提供 Auth、PostgreSQL 和私有 Storage |
@@ -103,7 +103,9 @@ Deployment 和 Release 必须来自同一次工作流运行。
 1. 在 Vercel 创建 Project，并选择 **Connect Git Repository** 关联本仓库。
 2. Framework Preset 选择 **Next.js**。
 3. Root Directory 保持仓库根目录。
-4. Node.js Version 选择 **20.x**，或交给 `package.json` 的 `engines` 自动决定。
+4. Node.js Version 选择 **22.x** 或更高，或交给 `package.json` 的 `engines` 自动决定。
+   `pnpm@11.21.0` 需要 Node.js 22.13 以上；低于该版本时 pnpm 无法启动，构建会在安装
+   依赖阶段直接失败。
 5. Install、Build、Dev 命令由仓库根目录的 `vercel.json` 提供，不需要手填。
 6. 在 Settings → Git 中确认 `main` 分支的 Deployment 指向 Production。
 7. 在 Settings → Git 中确认其他分支和 PR 生成 Preview Deployment。
