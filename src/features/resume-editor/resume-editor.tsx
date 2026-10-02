@@ -51,6 +51,7 @@ import { ScrollArea } from "../../components/ui/scroll-area"
 import { Skeleton } from "../../components/ui/skeleton"
 import { Spinner } from "../../components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../components/ui/tooltip"
+import { copyTextToClipboard } from "../../lib/clipboard"
 import type { EditableResume } from "../../server/domain/resume-service"
 import type { ResumeLinkTarget } from "../../shared/resume-schema/resume-link-target"
 import {
@@ -911,8 +912,11 @@ export function ResumeEditor({ resumeId, aiStorageOwnerId }: ResumeEditorProps) 
             <Button
               variant="outline"
               onClick={() => {
-                void navigator.clipboard.writeText(shareUrl)
-                toast.success("分享链接已复制")
+                void copyTextToClipboard(shareUrl).then((copied) => {
+                  if (copied) {
+                    toast.success("分享链接已复制")
+                  }
+                })
               }}
             >
               复制链接

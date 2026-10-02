@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
+import { copyTextToClipboard } from "../../lib/clipboard"
 import {
   defaultWebTemplateId,
   getWebTemplateScheme,
@@ -200,20 +201,16 @@ export function ResumeWebBuilderPage({
     }, webTemplateExitDurationMs)
   }
 
-  async function handleShare() {
+  function handleShare() {
     if (!shareEnabled) {
       return
     }
     const shareUrl = `${window.location.origin}/r/${loadedResume.publicSlug}/web?template=${encodeURIComponent(selectedTemplateId)}`
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-      toast.success("分享链接已复制")
-    } catch (shareError) {
-      if (shareError instanceof DOMException && shareError.name === "AbortError") {
-        return
+    void copyTextToClipboard(shareUrl).then((copied) => {
+      if (copied) {
+        toast.success("分享链接已复制")
       }
-      toast.error("分享失败，请稍后重试")
-    }
+    })
   }
 
   return (

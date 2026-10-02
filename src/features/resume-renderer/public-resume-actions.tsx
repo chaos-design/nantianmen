@@ -3,6 +3,7 @@
 import { LinkIcon, PrinterIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "../../components/ui/button"
+import { copyTextToClipboard } from "../../lib/clipboard"
 
 interface PublicResumeActionsProps {
   mode: "a4" | "web"
@@ -15,10 +16,11 @@ export function PublicResumeActions({ mode }: PublicResumeActionsProps) {
         variant="outline"
         size="xs"
         onClick={() => {
-          void navigator.clipboard
-            .writeText(window.location.href)
-            .then(() => toast.success("链接已复制"))
-            .catch(() => toast.error("链接复制失败，请手动复制地址栏"))
+          void copyTextToClipboard(window.location.href).then((copied) => {
+            if (copied) {
+              toast.success("链接已复制")
+            }
+          })
         }}
       >
         <LinkIcon data-icon="inline-start" />
