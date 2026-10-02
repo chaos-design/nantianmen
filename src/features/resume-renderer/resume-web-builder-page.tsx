@@ -214,22 +214,22 @@ export function ResumeWebBuilderPage({
       return
     }
     const shareUrl = `${window.location.origin}/r/${loadedResume.publicSlug}/web?template=${encodeURIComponent(selectedTemplateId)}`
-    const shareData = {
-      title: loadedResume.document.metadata.title,
-      text:
-        loadedResume.document.profile.summary ||
-        `${loadedResume.document.profile.name}的 Web 简历`,
-      url: shareUrl,
-    }
+    // const shareData = {
+    //   title: loadedResume.document.metadata.title,
+    //   text:
+    //     loadedResume.document.profile.summary ||
+    //     `${loadedResume.document.profile.name}的 Web 简历`,
+    //   url: shareUrl,
+    // }
     try {
-      const nativeShare = navigator.share
-      if (
-        resolveShareMethod(shareTestMode, typeof nativeShare === "function") ===
-        "native"
-      ) {
-        await nativeShare.call(navigator, shareData)
-        return
-      }
+      // const nativeShare = navigator.share
+      // if (
+      //   resolveShareMethod(shareTestMode, typeof nativeShare === "function") ===
+      //   "native"
+      // ) {
+      //   await nativeShare.call(navigator, shareData)
+      //   return
+      // }
       await navigator.clipboard.writeText(shareUrl)
       toast.success("分享链接已复制")
     } catch (shareError) {
