@@ -26,6 +26,7 @@ export async function POST(request: Request, context: RouteContext) {
       {
         publicationId: result.publication.id,
         publicationVersion: result.publication.publicationVersion,
+        publishedAt: result.publication.publishedAt,
         publicSlug: result.resume.publicSlug,
         shareUrl: `/r/${result.resume.publicSlug}`,
       },

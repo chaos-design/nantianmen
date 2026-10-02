@@ -74,6 +74,7 @@ import { listResumeAssets, loadResume, publishResume, saveResume } from "./edito
 import { type EditorFocusRequest, locateSuggestionTarget } from "./editor-focus-request"
 import { EditorPanelResizer } from "./editor-panel-resizer"
 import { PreviewZoomControls } from "./preview-zoom-controls"
+import { buildPublishNotice } from "./publish-notice"
 import { ResumeHistory } from "./resume-history"
 import { StyleInspector } from "./style-inspector"
 import { useEditorLayoutPreferences } from "./use-editor-layout-preferences"
@@ -350,7 +351,11 @@ export function ResumeEditor({ resumeId, aiStorageOwnerId }: ResumeEditorProps) 
       const result = await publishResume(resumeId)
       setResume((current) => (current ? { ...current, published: true } : current))
       setShareUrl(`${window.location.origin}${result.shareUrl}`)
-      toast.success(`已发布版本 ${result.publicationVersion}`)
+      const notice = buildPublishNotice({
+        publicationVersion: result.publicationVersion,
+        publishedAt: result.publishedAt,
+      })
+      toast.success(notice.message, notice.options)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "发布失败")
     } finally {

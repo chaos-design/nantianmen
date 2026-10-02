@@ -133,6 +133,7 @@ export async function deleteResumes(resumeIds: string[]): Promise<number> {
 export async function publishResume(resumeId: string): Promise<{
   publicationId: string
   publicationVersion: number
+  publishedAt: string
   publicSlug: string
   shareUrl: string
 }> {
