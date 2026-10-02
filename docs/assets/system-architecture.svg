@@ -1,0 +1,92 @@
+<svg width="1280" height="760" viewBox="0 0 1280 760" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Resume Lab system architecture</title>
+  <desc id="desc">Architecture diagram for Next.js route handlers, domain services, Supabase, asset storage, AI provider and public snapshots.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1280" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F2EA"/>
+      <stop offset="1" stop-color="#E5F4F0"/>
+    </linearGradient>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#0B1D2D" flood-opacity="0.12"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2L10 6L2 10" fill="none" stroke="#31566B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      .title { font: 800 34px Inter, Arial, sans-serif; letter-spacing: -.03em; }
+      .subtitle { font: 500 17px Inter, Arial, sans-serif; }
+      .cardTitle { font: 800 20px Inter, Arial, sans-serif; }
+      .cardText { font: 600 14px Inter, Arial, sans-serif; }
+      .tag { font: 800 12px Inter, Arial, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+      .mono { font: 700 13px SFMono-Regular, Consolas, monospace; }
+    </style>
+  </defs>
+  <rect width="1280" height="760" fill="url(#bg)"/>
+  <circle cx="108" cy="116" r="148" fill="#43D4B7" opacity="0.18"/>
+  <circle cx="1154" cy="94" r="186" fill="#DFA455" opacity="0.18"/>
+  <circle cx="1075" cy="688" r="166" fill="#102035" opacity="0.08"/>
+
+  <text class="tag" x="92" y="86" fill="#268772">Architecture</text>
+  <text class="title" x="92" y="132" fill="#102035">Resume Lab request and data boundaries</text>
+  <text class="subtitle" x="92" y="164" fill="#5B6676">The browser owns the session. Next.js owns business writes. Supabase stores durable data and private files.</text>
+
+  <g filter="url(#cardShadow)">
+    <rect x="92" y="236" width="220" height="132" rx="24" fill="#102035"/>
+    <text class="tag" x="122" y="278" fill="#8DEBD6">Client</text>
+    <text class="cardTitle" x="122" y="314" fill="#FFFFFF">Browser UI</text>
+    <text class="cardText" x="122" y="342" fill="#BFD0DC">Editor, A4 preview,</text>
+    <text class="cardText" x="122" y="364" fill="#BFD0DC">Web preview and auth.</text>
+
+    <rect x="92" y="512" width="220" height="132" rx="24" fill="#FFFFFF"/>
+    <text class="tag" x="122" y="554" fill="#8D7761">Public</text>
+    <text class="cardTitle" x="122" y="590" fill="#102035">Anonymous Share</text>
+    <text class="cardText" x="122" y="618" fill="#6D7480">Reads immutable</text>
+    <text class="cardText" x="122" y="640" fill="#6D7480">published snapshots.</text>
+
+    <rect x="414" y="236" width="226" height="132" rx="24" fill="#FFFFFF"/>
+    <text class="tag" x="444" y="278" fill="#268772">Next.js</text>
+    <text class="cardTitle" x="444" y="314" fill="#102035">Route Handlers</text>
+    <text class="mono" x="444" y="342" fill="#607184">/api/resumes</text>
+    <text class="mono" x="444" y="364" fill="#607184">/api/public-resumes</text>
+
+    <rect x="414" y="512" width="226" height="132" rx="24" fill="#FFFFFF"/>
+    <text class="tag" x="444" y="554" fill="#268772">Domain</text>
+    <text class="cardTitle" x="444" y="590" fill="#102035">Resume Services</text>
+    <text class="cardText" x="444" y="618" fill="#6D7480">Ownership checks,</text>
+    <text class="cardText" x="444" y="640" fill="#6D7480">versions and publish.</text>
+
+    <rect x="742" y="170" width="220" height="116" rx="24" fill="#102035"/>
+    <text class="tag" x="772" y="212" fill="#8DEBD6">Auth</text>
+    <text class="cardTitle" x="772" y="248" fill="#FFFFFF">Supabase Auth</text>
+    <text class="cardText" x="772" y="274" fill="#BFD0DC">JWT session claims</text>
+
+    <rect x="742" y="334" width="220" height="116" rx="24" fill="#FFFFFF"/>
+    <text class="tag" x="772" y="376" fill="#8D7761">Database</text>
+    <text class="cardTitle" x="772" y="412" fill="#102035">PostgreSQL</text>
+    <text class="cardText" x="772" y="438" fill="#6D7480">Drafts, snapshots, audit</text>
+
+    <rect x="742" y="498" width="220" height="116" rx="24" fill="#FFFFFF"/>
+    <text class="tag" x="772" y="540" fill="#8D7761">Storage</text>
+    <text class="cardTitle" x="772" y="576" fill="#102035">Private Assets</text>
+    <text class="cardText" x="772" y="602" fill="#6D7480">PNG, JPEG, WebP files</text>
+
+    <rect x="1028" y="334" width="196" height="116" rx="24" fill="#E6F8F4"/>
+    <text class="tag" x="1058" y="376" fill="#268772">AI</text>
+    <text class="cardTitle" x="1058" y="412" fill="#102035">OpenAI API</text>
+    <text class="cardText" x="1058" y="438" fill="#5A716D">Optional suggestions</text>
+  </g>
+
+  <path d="M312 302H414" stroke="#31566B" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M527 368V512" stroke="#31566B" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M640 298C688 270 702 238 742 228" stroke="#31566B" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M640 578C694 526 706 422 742 392" stroke="#31566B" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M640 586C688 590 700 568 742 556" stroke="#31566B" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M962 392H1028" stroke="#31566B" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M414 578H312" stroke="#31566B" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M202 368V512" stroke="#31566B" stroke-width="3" stroke-dasharray="8 10" marker-end="url(#arrow)"/>
+
+  <g transform="translate(92 688)">
+    <rect x="0" y="-28" width="1096" height="46" rx="23" fill="#FFFFFF" opacity="0.82"/>
+    <text class="cardText" x="28" y="1" fill="#526372">Boundary: browsers never write business tables or private storage directly; service-role credentials stay on the server only.</text>
+  </g>
+</svg>

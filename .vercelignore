@@ -1,0 +1,4 @@
+# 部署环境变量由 Vercel Project Settings 注入，不上传本地配置。
+.env
+.env.*
+!.env.example
