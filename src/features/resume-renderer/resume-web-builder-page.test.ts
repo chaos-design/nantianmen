@@ -4,23 +4,7 @@ import {
   getWebPreviewShareMessage,
   persistTemplateSidebarCollapsed,
   readTemplateSidebarCollapsed,
-  resolveShareMethod,
 } from "./resume-web-builder-page"
-
-describe("web builder share method", () => {
-  it("uses native share when available in normal mode", () => {
-    expect(resolveShareMethod(false, true)).toBe("native")
-  })
-
-  it("forces clipboard sharing in test mode", () => {
-    expect(resolveShareMethod(true, true)).toBe("clipboard")
-    expect(resolveShareMethod(true, false)).toBe("clipboard")
-  })
-
-  it("falls back to clipboard when native share is unavailable", () => {
-    expect(resolveShareMethod(false, false)).toBe("clipboard")
-  })
-})
 
 describe("web builder share availability", () => {
   it("requires a published resume outside Preview mode", () => {

@@ -27,7 +27,6 @@ import { WebTemplateThumbnail } from "./web-template-thumbnail"
 
 interface ResumeWebBuilderPageProps {
   resumeId: string
-  shareTestMode?: boolean
   readOnly?: boolean
 }
 
@@ -44,13 +43,6 @@ const webTemplateCompositionLabels: Record<WebTemplateComposition, string> = {
 }
 
 type WebTemplateTransitionState = "idle" | "exiting"
-
-export function resolveShareMethod(
-  shareTestMode: boolean,
-  nativeShareSupported: boolean,
-): "native" | "clipboard" {
-  return !shareTestMode && nativeShareSupported ? "native" : "clipboard"
-}
 
 export function canShareWebPreview(readOnly: boolean, published: boolean): boolean {
   return !readOnly && published
@@ -104,7 +96,6 @@ export function persistTemplateSidebarCollapsed(
 
 export function ResumeWebBuilderPage({
   resumeId,
-  shareTestMode = false,
   readOnly = false,
 }: ResumeWebBuilderPageProps) {
   const { resume, error } = useDraftResumeLoader(resumeId, false)
@@ -214,22 +205,7 @@ export function ResumeWebBuilderPage({
       return
     }
     const shareUrl = `${window.location.origin}/r/${loadedResume.publicSlug}/web?template=${encodeURIComponent(selectedTemplateId)}`
-    // const shareData = {
-    //   title: loadedResume.document.metadata.title,
-    //   text:
-    //     loadedResume.document.profile.summary ||
-    //     `${loadedResume.document.profile.name}的 Web 简历`,
-    //   url: shareUrl,
-    // }
     try {
-      // const nativeShare = navigator.share
-      // if (
-      //   resolveShareMethod(shareTestMode, typeof nativeShare === "function") ===
-      //   "native"
-      // ) {
-      //   await nativeShare.call(navigator, shareData)
-      //   return
-      // }
       await navigator.clipboard.writeText(shareUrl)
       toast.success("分享链接已复制")
     } catch (shareError) {

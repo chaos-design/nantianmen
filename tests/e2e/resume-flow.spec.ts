@@ -1666,7 +1666,7 @@ test("renders every web resume template without saving", async ({ page }) => {
   expect(consoleErrors).toEqual([])
 })
 
-test("copies the current web template in share test mode without platform footer", async ({
+test("copies the current web template to clipboard without platform footer", async ({
   page,
 }) => {
   const consoleErrors: string[] = []
@@ -1690,11 +1690,11 @@ test("copies the current web template in share test mode without platform footer
   if (!webPageHref) {
     throw new Error("Web 页面链接缺少 href")
   }
-  await page.goto(`${webPageHref}?test=1`)
+  await page.goto(webPageHref)
   await page.evaluate(() => {
     Object.defineProperty(navigator, "share", {
       configurable: true,
-      value: () => Promise.reject(new Error("测试模式不应调用 navigator.share")),
+      value: () => Promise.reject(new Error("不应调用 navigator.share")),
     })
   })
   await expect(page.locator(".web-resume-footer")).toHaveCount(0)
