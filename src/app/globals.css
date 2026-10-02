@@ -10161,7 +10161,6 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 .web-resume-module {
   position: relative;
   display: grid;
-  min-height: 72vh;
   gap: clamp(1.5rem, 4vw, 4rem);
   border-bottom: 1px solid color-mix(in oklab, var(--web-copy) 9%, transparent);
   padding: clamp(4.5rem, 9vw, 8rem) clamp(2rem, 7vw, 8rem);
@@ -10915,7 +10914,6 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 }
 
 .resume-web-page[data-composition="mosaic"] .web-resume-module {
-  min-height: 0;
   margin-top: 1rem;
   border: 1px solid color-mix(in oklab, var(--web-accent) 18%, transparent);
   border-radius: 1.4rem;
@@ -11188,10 +11186,6 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 .resume-web-page[data-web-template="paper-journal"] .web-resume-hero-visual {
   border-radius: 50% 50% 0 0;
   box-shadow: 0 20px 60px rgb(48 40 32 / 18%);
-}
-
-.resume-web-page[data-web-template="paper-journal"] .web-resume-module {
-  min-height: 58vh;
 }
 
 .resume-web-page[data-web-template="swiss-ledger"] {
@@ -12017,7 +12011,6 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 }
 
 .resume-web-page .web-resume-module:last-child {
-  min-height: 0;
   padding-bottom: clamp(3rem, 5vw, 5rem);
 }
 
@@ -12969,7 +12962,6 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 
   .web-resume-module {
     display: block;
-    min-height: 0;
     padding: 5rem 1.35rem;
   }
 
