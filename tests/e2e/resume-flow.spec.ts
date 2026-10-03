@@ -1717,6 +1717,10 @@ test("copies the current web template to clipboard without platform footer", asy
 })
 
 test("creates, edits, publishes, and shares a resume", async ({ page }) => {
+  // 这是全流程最长的一条用例：建简历、表单/JSON/A4/样式/模板多轮编辑、
+  // 面板折叠展开、发布、分享与资源授权校验，单条就覆盖上千行断言。默认
+  // 180s（即便放宽到 300s）在冷编译或 CI 上仍会超时，这里按实测留足余量。
+  test.setTimeout(600_000)
   const consoleErrors: string[] = []
   page.on("console", (message) => {
     if (message.type() === "error") {
@@ -1869,9 +1873,21 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
   const canvas = page.locator(".a4-canvas")
   await expect(canvas).toBeVisible()
   const workPreview = canvas.locator('[data-section-type="workExperience"]').first()
-  await workPreview.hover()
   await expect(workPreview).toHaveCSS("cursor", "pointer")
-  await expect(workPreview).not.toHaveCSS("box-shadow", "none")
+  // 单次 hover() 的结果会在面板过渡或重排中丢失，此时读到的是未悬停的
+  // box-shadow（none）。这里每次重试都重新建立 hover 再读取，断言的仍然是
+  // 「hover 会产生阴影」，只是不依赖那一次 hover 一直存活。
+  await expect
+    .poll(
+      async () => {
+        await workPreview.hover()
+        return await workPreview.evaluate(
+          (element) => getComputedStyle(element).boxShadow,
+        )
+      },
+      { timeout: 30_000 },
+    )
+    .not.toBe("none")
   await expect
     .poll(() =>
       workPreview.evaluate((element) =>
