@@ -204,11 +204,19 @@ Storage 默认使用初始化脚本创建的私有 `resume-assets` Bucket。全�
 - `resume-assets` Bucket 是私有 Bucket。
 - Bucket 限制为 PNG、JPEG、WebP，单文件不超过 5 MiB。
 - `publish_resume_snapshot` 只向 `service_role` 授权。
+- `public.announcements` 已创建，且已写入欢迎公告。
 - 生产已启用合适的备份和 Point-in-Time Recovery 策略。
 
 `supabase/platform.sql` 是项目唯一的数据库初始化脚本，包含表结构、约束、索引、
-RLS、权限、认证 Hook、发布函数和 Storage Bucket。项目不维护拆分迁移或种子 SQL，所有环境
-都执行同一文件。
+RLS、权限、认证 Hook、发布函数和 Storage Bucket。所有环境都执行同一文件。
+
+### 已有环境的增量升级
+
+已初始化的环境需要补齐公告表时，执行 `supabase/update.sql`。该脚本可重复执行，
+不会覆盖管理员已修改的公告内容。全新环境不执行它，直接用 `platform.sql`。
+
+建表后若 `/api/announcements` 仍返回 `PGRST205`，说明 PostgREST schema cache
+尚未刷新，等待片刻重试即可，不要据此判断建表失败或重复执行建表语句。
 
 在 Supabase Auth 配置：
 

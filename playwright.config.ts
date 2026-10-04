@@ -10,7 +10,12 @@ const e2eDataRoot =
 const authTestUserId =
   process.env.AUTH_TEST_USER_ID ?? "00000000-0000-4000-8000-000000000001"
 const authTestUserEmail = process.env.AUTH_TEST_USER_EMAIL ?? "playwright@example.com"
+// 测试默认以普通成员身份运行。`PLAYWRIGHT_AS_ADMIN=1` 让同一套 dev server
+// 以管理员身份启动，用于验证只有管理员可见可写的功能（例如公告配置）。
+// 身份判定仍然只是 AUTH_TEST_USER_ID 与 ADMIN_USER_ID 的等值比较，
+// 这里只决定注入哪个测试身份，不改变任何生产鉴权逻辑。
 const adminUserId = process.env.ADMIN_USER_ID ?? "00000000-0000-4000-8000-000000000002"
+const runAsAdmin = process.env.PLAYWRIGHT_AS_ADMIN === "1"
 const previewEnv = {
   ...(process.env.PREVIEW_USER_ID
     ? { PREVIEW_USER_ID: process.env.PREVIEW_USER_ID }
@@ -56,8 +61,10 @@ export default defineConfig({
       RESUME_DATA_BACKEND: "file",
       RESUME_FILE_DATABASE_PATH: path.join(e2eDataRoot, "resumes.json"),
       RESUME_FILE_ASSET_DIR: path.join(e2eDataRoot, "assets"),
-      AUTH_TEST_USER_ID: authTestUserId,
-      AUTH_TEST_USER_EMAIL: authTestUserEmail,
+      AUTH_TEST_USER_ID: runAsAdmin ? adminUserId : authTestUserId,
+      AUTH_TEST_USER_EMAIL: runAsAdmin
+        ? "playwright-admin@example.com"
+        : authTestUserEmail,
       ADMIN_USER_ID: adminUserId,
       ...previewEnv,
     },
