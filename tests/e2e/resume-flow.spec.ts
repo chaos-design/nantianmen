@@ -235,6 +235,19 @@ test("animates landing navigation direction and smooth section jumps", async ({
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100)
 })
 
+test("serves a resolvable tab icon on the landing page", async ({ page }) => {
+  await page.goto("/")
+
+  const iconHrefs = await page
+    .locator('link[rel~="icon"]')
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href")))
+  expect(iconHrefs.length).toBeGreaterThan(0)
+
+  const favicon = await page.request.get("/favicon.ico")
+  expect(favicon.status()).toBe(200)
+  expect(favicon.headers()["content-type"]).toContain("image")
+})
+
 test("connects the landing story through a shared editorial workbench", async ({
   page,
 }) => {
