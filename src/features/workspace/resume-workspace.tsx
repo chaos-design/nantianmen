@@ -9,8 +9,10 @@ import {
   EmptyTitle,
 } from "../../components/ui/empty"
 import type { AuthContext } from "../../server/auth/auth-context"
+import type { AnnouncementOverview } from "../../server/domain/announcement-service"
 import type { ResumeListItem as ResumeListItemData } from "../../server/domain/resume-service"
 import { maximumMemberResumeCount } from "../../shared/resume-schema/resume-policy"
+import { AnnouncementAdminPanel } from "../announcement/announcement-admin-panel"
 import { SignOutButton } from "../auth/sign-out-button"
 import { resolveWorkspaceCreationMode } from "./workspace-creation-mode"
 import { WorkspaceHeader } from "./workspace-header"
@@ -23,9 +25,15 @@ import {
 interface ResumeWorkspaceProps {
   actor: AuthContext
   resumes: ResumeListItemData[]
+  /** 仅管理员可见的全量公告，由服务端下发；普通成员和 Preview 为 null。 */
+  managedAnnouncements?: AnnouncementOverview | null
 }
 
-export function ResumeWorkspace({ actor, resumes }: ResumeWorkspaceProps) {
+export function ResumeWorkspace({
+  actor,
+  resumes,
+  managedAnnouncements = null,
+}: ResumeWorkspaceProps) {
   const previewMode = actor.mode === "preview"
   const creationMode = resolveWorkspaceCreationMode(previewMode, resumes.length)
   const resumeLimitReached =
@@ -53,7 +61,13 @@ export function ResumeWorkspace({ actor, resumes }: ResumeWorkspaceProps) {
               </Badge>
             ) : null}
           </div>
-          <SignOutButton />
+          <div className="workspace-account">
+            {/* Preview 会话永远不是管理员，服务端也拒绝其写入，这里直接不渲染入口。 */}
+            {actor.isAdmin && !previewMode && managedAnnouncements ? (
+              <AnnouncementAdminPanel initialAnnouncements={managedAnnouncements} />
+            ) : null}
+            <SignOutButton />
+          </div>
         </div>
       </WorkspaceHeader>
 

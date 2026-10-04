@@ -1230,6 +1230,178 @@
   }
 }
 
+/* 全局公告轮播槽位：登录后展示在页首，关闭状态由浏览器本地记录。 */
+.announcement-carousel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px clamp(20px, 4vw, 64px);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--muted) 60%, var(--background));
+  color: var(--foreground);
+  font-size: 0.85rem;
+}
+
+.announcement-carousel[data-level="success"] {
+  background: color-mix(in oklab, var(--chart-2) 14%, var(--background));
+}
+
+.announcement-carousel[data-level="warning"] {
+  background: color-mix(in oklab, var(--chart-4) 16%, var(--background));
+}
+
+.announcement-carousel[data-level="danger"] {
+  background: color-mix(in oklab, var(--destructive) 14%, var(--background));
+}
+
+.announcement-carousel[data-empty="true"] {
+  color: var(--muted-foreground);
+}
+
+.announcement-carousel-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+
+.announcement-carousel-level {
+  flex-shrink: 0;
+  border: 1px solid color-mix(in oklab, currentColor 22%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.announcement-carousel-body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.announcement-carousel-body strong {
+  font-weight: 600;
+}
+
+.announcement-carousel-body span {
+  color: var(--muted-foreground);
+}
+
+.announcement-carousel-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.announcement-carousel-link:hover {
+  text-decoration: underline;
+}
+
+.announcement-carousel-dots {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.announcement-carousel-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: color-mix(in oklab, currentColor 25%, transparent);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.announcement-carousel-dot[aria-current="true"] {
+  background: var(--foreground);
+}
+
+@media (max-width: 720px) {
+  .announcement-carousel {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .announcement-carousel-body {
+    flex-basis: 100%;
+    order: 3;
+  }
+}
+
+/* 管理员公告配置面板。 */
+.announcement-admin-dialog {
+  max-height: min(88svh, 900px);
+  overflow-y: auto;
+}
+
+.announcement-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.announcement-admin-empty {
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+}
+
+.announcement-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.announcement-admin-item {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.announcement-admin-item > header,
+.announcement-admin-item > footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.announcement-admin-item > footer {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* 阻断保存的原因必须写出来，不能只把按钮置灰。 */
+.announcement-admin-issue {
+  margin-right: auto;
+  color: var(--destructive);
+  font-size: 0.8rem;
+}
+
+.announcement-admin-fields {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .workspace-shell {
   min-height: 100svh;
   padding: 24px clamp(20px, 4vw, 64px) 48px;
