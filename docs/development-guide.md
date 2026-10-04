@@ -110,15 +110,14 @@ Node.js 版本由 `.nvmrc` 统一约定，CI 通过 `node-version-file` 读取�
 
 ### 4.1 拉取代码
 
-当前工作区没有保存远程仓库地址。请先在 GitHub 仓库的 **Code** 菜单复制 Clone
-URL，然后执行：
+仓库地址为 `https://github.com/chaos-design/nantianmen`，执行：
 
 ```bash
-git clone "$REPOSITORY_URL" nantianmen
+git clone https://github.com/chaos-design/nantianmen.git nantianmen
 cd nantianmen
 ```
 
-`REPOSITORY_URL` 是从 GitHub 复制的 HTTPS 或 SSH 地址。
+也可以在 GitHub 仓库的 **Code** 菜单复制 SSH 地址后克隆。
 
 ### 4.2 安装依赖
 

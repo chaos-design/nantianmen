@@ -255,6 +255,15 @@ test("connects the landing story through a shared editorial workbench", async ({
   )
   await expect(page.locator(".landing-nav")).toHaveCSS("position", "sticky")
 
+  const footerRepositoryLink = page.getByRole("link", { name: /GitHub/ })
+  await expect(footerRepositoryLink).toHaveAttribute(
+    "href",
+    "https://github.com/chaos-design/nantianmen",
+  )
+  await expect(footerRepositoryLink).toHaveAttribute("target", "_blank")
+  await expect(page.locator(".landing-footer-links")).toContainText("服务条款")
+  await expect(page.locator(".landing-footer-links")).toContainText("隐私政策")
+
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.reload()
   const reducedMotionCarousel = page.locator(".landing-template-grid")

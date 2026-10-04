@@ -3,6 +3,7 @@ import {
   ArrowRightIcon,
   CheckIcon,
   FileTextIcon,
+  GitBranchIcon,
   Globe2Icon,
   Layers3Icon,
   LockKeyholeIcon,
@@ -13,6 +14,11 @@ import Link from "next/link"
 import type { CSSProperties, ReactNode } from "react"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
+import {
+  formatLandingFooterCopyright,
+  landingLegalLinks,
+  landingRepository,
+} from "../features/landing/landing-footer-links"
 import {
   getLandingCapabilities,
   getLandingHighlights,
@@ -173,6 +179,7 @@ export default async function HomePage() {
   const templateCategoryCount = new Set(
     templateSchemes.map((scheme) => scheme.category),
   ).size
+  const footerCopyright = formatLandingFooterCopyright(new Date().getFullYear())
   const finalCta = previewMode
     ? {
         badge: "PREVIEW READY",
@@ -722,6 +729,29 @@ export default async function HomePage() {
               <ArrowRightIcon aria-hidden="true" />
             </Link>
           </div>
+        </div>
+
+        <div className="landing-footer-meta">
+          <p className="landing-footer-copyright">{footerCopyright}</p>
+          <nav className="landing-footer-links" aria-label="站点信息与开源地址">
+            <a
+              className="landing-footer-repo"
+              href={landingRepository.href}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <GitBranchIcon aria-hidden="true" />
+              {landingRepository.label}
+              <span className="sr-only">
+                仓库：{landingRepository.path}（新窗口打开）
+              </span>
+            </a>
+            {landingLegalLinks.map((item) => (
+              <Link className="landing-footer-link" href={item.href} key={item.href}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         </div>
       </footer>
     </main>
