@@ -261,6 +261,7 @@ test("connects the landing story through a shared editorial workbench", async ({
     "https://github.com/chaos-design/nantianmen",
   )
   await expect(footerRepositoryLink).toHaveAttribute("target", "_blank")
+  await expect(footerRepositoryLink.locator("svg")).toHaveCount(1)
   await expect(page.locator(".landing-footer-links")).toContainText("服务条款")
   await expect(page.locator(".landing-footer-links")).toContainText("隐私政策")
 

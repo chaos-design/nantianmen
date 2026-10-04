@@ -3,7 +3,6 @@ import {
   ArrowRightIcon,
   CheckIcon,
   FileTextIcon,
-  GitBranchIcon,
   Globe2Icon,
   Layers3Icon,
   LockKeyholeIcon,
@@ -19,6 +18,7 @@ import {
   landingLegalLinks,
   landingRepository,
 } from "../features/landing/landing-footer-links"
+import { LandingGithubMark } from "../features/landing/landing-github-mark"
 import {
   getLandingCapabilities,
   getLandingHighlights,
@@ -740,7 +740,7 @@ export default async function HomePage() {
               rel="noreferrer"
               target="_blank"
             >
-              <GitBranchIcon aria-hidden="true" />
+              <LandingGithubMark />
               {landingRepository.label}
               <span className="sr-only">
                 仓库：{landingRepository.path}（新窗口打开）
