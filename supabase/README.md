@@ -2,13 +2,16 @@
 
 [中文](README.md) | [English](README.en.md)
 
-本目录只维护一个 SQL 文件：`platform.sql`。新建开发、测试或生产环境时，均使用该文件完整初始化 Supabase 数据库、Auth Hook 和 Storage。
+本目录的初始化入口只有 `platform.sql`。新建开发、测试或生产环境时，均使用该文件完整初始化 Supabase 数据库、Auth Hook 和 Storage。
+
+`update.sql` 是给**已存在的数据库**补齐新功能用的增量脚本，不参与新环境初始化，也不改变 `platform.sql` 作为唯一事实来源的地位。
 
 ## 目录内容
 
 | 路径 | 说明 |
 | --- | --- |
 | `platform.sql` | 唯一 SQL 初始化脚本，包含表结构、约束、索引、RLS、权限、认证 Hook、发布函数和私有 Storage Bucket |
+| `update.sql` | 增量脚本，仅包含 `platform.sql` 中与 `public.announcements` 相关的语句，供旧库补齐公告功能；全新环境不需要执行 |
 | `config.toml` | Supabase CLI 本地服务配置，不负责自动创建业务表 |
 | `.gitignore` | Supabase CLI 本地临时文件忽略规则 |
 
@@ -28,7 +31,7 @@
 
 执行 `platform.sql` 后会创建或配置：
 
-- 简历草稿、发布快照、资源元数据和 AI 审计相关业务表。
+- 简历草稿、发布快照、资源元数据、AI 审计和全局公告相关业务表。
 - 工作台、公开分享、资源读取和 AI 审计查询所需索引。
 - 表约束和外键约束。
 - Row Level Security 和直接角色权限收敛。
@@ -59,13 +62,20 @@ icloud.com / me.com / yahoo.com / proton.me / protonmail.com
 
 `config.toml` 已关闭自动迁移和种子加载，因此 `supabase db reset` 不会自动创建项目业务表。需要重建本地环境时，应在本地 SQL Editor 中重新执行 `platform.sql` 的完整内容。
 
-项目不维护拆分迁移或种子 SQL，避免同一数据库结构存在多个初始化来源。
+项目不维护拆分迁移或种子 SQL，避免同一数据库结构存在多个初始化来源。`update.sql` 是唯一的例外，它只是 `platform.sql` 中公告相关语句的摘录，用于把已初始化的库升级到当前结构；修改公告表结构时必须同步修改两个文件。
+
+## 增量更新
+
+已初始化的数据库需要升级到当前结构时，在 SQL Editor 执行 `update.sql` 的完整内容。脚本可重复执行，不会覆盖管理员已修改的公告内容。
+
+执行后若接口仍返回 `PGRST205`（找不到表），是 PostgREST schema cache 尚未刷新，等待片刻重试即可，不要据此判断建表失败。
 
 ## 执行后检查
 
 完成初始化后至少检查：
 
-- `resumes`、`resume_publications`、`resume_assets` 等业务表已存在。
+- `resumes`、`resume_publications`、`resume_assets`、`announcements` 等业务表已存在。
+- `announcements` 表已写入一条欢迎公告。
 - 所有业务表已启用 Row Level Security。
 - `anon` 和 `authenticated` 没有业务表直连权限。
 - Before User Created Hook 已绑定 `public.restrict_registration_email_domain`。

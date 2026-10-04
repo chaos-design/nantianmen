@@ -20,7 +20,7 @@ Résumé Lab 是一个面向简历创作、A4 排版和在线展示的可视化�
 | 页面         | 预览                                                                           | 功能说明                                                                                                                                  |
 | ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | 着陆页        | ![Résumé Lab 着陆页](docs/assets/screenshots/landing-page.png)                  | 着陆页集中展示产品价值、模板效果和从内容维护到多端输出的完整路径，用产品叙事解释“内容维护一次，A4 和 Web 多端复用”；展示 24 套真实 A4 模板、模板轮播、工作流对比和最终输出，并适配 Preview 只读体验、移动端横向浏览和减少动画偏好。 |
-| 工作台与模板库    | ![Résumé Lab 工作台模板库](docs/assets/screenshots/workspace-template-library.png) | 工作台先引导用户选择 A4 模板，再进入简历创建、筛选、管理和预览流程。新用户先进入模板库，选择模板后创建简历；已有简历可按模板、发布状态和关键词筛选，支持编辑、A4 预览、Web 预览、Web 分享、删除和批量管理，Preview 账号保持只读。    |
+| 工作台与模板库    | ![Résumé Lab 工作台模板库](docs/assets/screenshots/workspace-template-library.png) | 工作台先引导用户选择 A4 模板，再进入简历创建、筛选、管理和预览流程。新用户先进入模板库，选择模板后创建简历；已有简历可按模板、发布状态和关键词筛选，支持编辑、A4 预览、Web 预览、Web 分享、删除和批量管理，Preview 账号保持只读。登录后页首展示全局公告轮播，用户可逐条关闭，管理员可配置公告内容、级别、生效时间与启停状态。    |
 | 可视化编辑器     | ![Résumé Lab 可视化编辑器](docs/assets/screenshots/editor-workspace.png)           | 编辑器把结构化表单、JSON 输入、A4 实时分页画布和样式资源检查器放在同一工作区，支持表单填写、JSON 批量编辑和导入导出、A4 实时分页、文档级排版、区块级样式、图片资源管理、自动保存、撤销重做、乐观并发、AI 内容建议和发布分享。        |
 | A4 全页预览    | ![Résumé Lab A4 全页预览](docs/assets/screenshots/a4-preview.png)                | A4 全页预览用于核对最终投递版简历的分页、版式和打印导出效果，按 A4 比例展示最终简历，支持多页查看、页面缩放、返回编辑器和浏览器打印导出；分页逻辑按像素预算贪心填充当前页，分栏背景和图片资源按发布快照稳定渲染。                    |
 | Web 简历生成器  | ![Résumé Lab Web 简历生成器](docs/assets/screenshots/web-resume-builder.png)      | Web 简历生成器用同一份结构化内容切换 40 套在线展示风格并预览响应式效果。同一份结构化内容可生成 Web 展示页，支持 40 套 Web 风格、导航进度、滚动定位、主题动效、响应式布局、空内容过滤、最大化预览、复制分享链接和返回编辑器。       |
@@ -31,15 +31,17 @@ Résumé Lab 是一个面向简历创作、A4 排版和在线展示的可视化�
 | 模块         | 说明                                                                    |
 | ---------- | --------------------------------------------------------------------- |
 | 结构化 Schema | `src/shared/resume-schema/` 统一约束客户端、服务端和 JSON 编辑器的数据结构                |
+| AI 上下文     | `llm.txt` 是面向大语言模型的导航索引；`AGENTS.md` 是面向在本仓库工作的 AI Agent 的强制规则     |
 | A4 模板系统    | `src/shared/resume-template/template-schemes.ts` 管理 24 套 A4 模板配置      |
 | Web 模板系统   | `src/shared/resume-template/web-template-schemes.ts` 管理 40 套 Web 风格配置 |
 | 编辑器        | `src/features/resume-editor/` 负责表单、JSON、样式、资源、AI 和保存体验                |
 | 渲染器        | `src/features/resume-renderer/` 负责 A4 分页、公开页面和 Web 简历渲染               |
 | 工作台        | `src/features/workspace/` 负责模板选择、简历列表、筛选和批量管理                         |
 | 账号认证       | `src/features/auth/` 负责常用邮箱注册限制、登录、邮箱确认和密码恢复                       |
+| 平台公告       | `src/features/announcement/` 和 `src/shared/announcement/` 负责登录后公告轮播、用户本地关闭和管理员配置 |
 | 领域服务       | `src/server/domain/` 负责所有权、管理员权限、Preview 只读和发布流程                      |
 | 持久化        | `src/server/repositories/` 和 `src/server/assets/` 适配 Supabase 与测试文件后端 |
-| 数据库        | `supabase/platform.sql` 是唯一初始化脚本，包含表、索引、RLS、认证 Hook、函数和私有 Bucket     |
+| 数据库        | `supabase/platform.sql` 是唯一初始化脚本，包含表、索引、RLS、认证 Hook、函数和私有 Bucket；`supabase/update.sql` 仅用于给已有库补齐公告表     |
 
 ## 注册邮箱限制
 

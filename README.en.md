@@ -21,7 +21,7 @@ The following screenshots are generated from local project pages and stored in `
 | Page | Preview | Feature Description |
 | --- | --- | --- |
 | Landing Page | ![Résumé Lab landing page](docs/assets/screenshots/landing-page.png) | The landing page presents the product value, template results, and the full path from content maintenance to multi-channel output. It explains the idea of one content source reused across A4 and web outputs, shows 24 real rendered A4 templates, includes template carousel and workflow comparison, and supports Preview read-only copy, mobile horizontal browsing, and reduced motion preferences. |
-| Workspace and Template Library | ![Résumé Lab workspace template library](docs/assets/screenshots/workspace-template-library.png) | The workspace guides users to choose an A4 template before creating a resume. New users start in the template library, while existing resumes can be filtered by template, publication state, and keyword, with edit, A4 preview, web preview, web share, delete, and batch management actions. Preview accounts remain read-only. |
+| Workspace and Template Library | ![Résumé Lab workspace template library](docs/assets/screenshots/workspace-template-library.png) | The workspace guides users to choose an A4 template before creating a resume. New users start in the template library, while existing resumes can be filtered by template, publication state, and keyword, with edit, A4 preview, web preview, web share, delete, and batch management actions. Preview accounts remain read-only. A global announcement carousel sits above the workspace after sign-in: users can dismiss entries one by one, and administrators can configure content, severity, active window, and enable state. |
 | Visual Editor | ![Résumé Lab visual editor](docs/assets/screenshots/editor-workspace.png) | The editor places structured forms, JSON input, live A4 pagination, document style controls, section style controls, and asset inspectors in one workspace. It supports form editing, JSON import and export, real-time A4 pagination, image asset management, autosave, undo, redo, optimistic concurrency, AI suggestions, and publishing. |
 | A4 Full Preview | ![Résumé Lab A4 full preview](docs/assets/screenshots/a4-preview.png) | The A4 full preview helps users inspect the final paginated resume, layout, and print export result. It displays the resume with A4 proportions, supports multi-page review, scaling, returning to the editor, and browser print export, while pagination fills the current page by pixel budget before creating the next page. |
 | Web Resume Builder | ![Résumé Lab web resume builder](docs/assets/screenshots/web-resume-builder.png) | The web resume builder turns the same structured content into an online page and previews responsive results across 40 web styles. It supports progress navigation, scroll targeting, theme motion, responsive layout, empty-content filtering, maximized preview, share-link copying, and returning to the editor. |
@@ -32,15 +32,17 @@ The following screenshots are generated from local project pages and stored in `
 | Module | Description |
 | --- | --- |
 | Structured Schema | `src/shared/resume-schema/` defines the shared data structure for client, server, and JSON editing |
+| AI Context | `llm.txt` is a navigation index for LLMs; `AGENTS.md` holds the mandatory rules for AI agents working in this repository |
 | A4 templates | `src/shared/resume-template/template-schemes.ts` manages 24 A4 template configurations |
 | Web templates | `src/shared/resume-template/web-template-schemes.ts` manages 40 web style configurations |
 | Editor | `src/features/resume-editor/` owns forms, JSON, style, resources, AI, and save experience |
 | Renderer | `src/features/resume-renderer/` owns A4 pagination, public pages, and web resume rendering |
 | Workspace | `src/features/workspace/` owns template selection, resume lists, filters, and batch management |
 | Authentication | `src/features/auth/` owns common-domain registration, sign-in, email confirmation, and password recovery |
+| Announcements | `src/features/announcement/` and `src/shared/announcement/` own the signed-in carousel, per-user dismissal, and the administrator configuration panel |
 | Domain services | `src/server/domain/` owns ownership checks, administrator access, Preview read-only mode, and publishing |
 | Persistence | `src/server/repositories/` and `src/server/assets/` adapt Supabase and test file backends |
-| Database | `supabase/platform.sql` is the only initialization script, including tables, indexes, RLS, the Auth Hook, functions, and private Bucket |
+| Database | `supabase/platform.sql` is the only initialization script, including tables, indexes, RLS, the Auth Hook, functions, and private Bucket; `supabase/update.sql` only adds the announcement table to existing databases |
 
 ## Registration Email Policy
 

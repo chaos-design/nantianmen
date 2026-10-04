@@ -1,0 +1,129 @@
+# Résumé Lab
+
+> Résumé Lab 是一个基于结构化 JSON 的简历可视化平台：表单与 JSON 双模式编辑、A4 分页预览、Web 简历生成、模板切换、图片资源管理、AI 内容建议和公开分享。Next.js 15 App Router + React 19 + TypeScript，数据落在 Supabase（Auth、PostgreSQL、私有 Storage），Monaco Editor 本地托管。
+>
+> Résumé Lab is a structured-JSON resume platform: visual form editing, A4 paginated preview, web resume generation, template switching, image assets, AI suggestions, and public sharing.
+
+本文件是给大语言模型用的**导航索引**，只提供定位信息和硬约束摘要，内容不复制已有文档。正文一律以下面列出的源文件为准；本文件与源文件冲突时，以源文件为准。
+
+## 先读这个
+
+按这个顺序读，能在最少 token 内建立正确心智模型：
+
+- [AGENTS.md](AGENTS.md)：AI Agent 在本仓库工作时的**强制规则**。含禁止事项、代码风格、测试策略。改动代码前必须读。
+- [README.md](README.md)：产品视角的页面与模块说明，面向首次了解项目的人。
+- [docs/development-guide.md](docs/development-guide.md)：日常开发细节。目录职责、环境变量、调试指南、测试指南。
+- [docs/deployment-guide.md](docs/deployment-guide.md)：Vercel、Supabase、GitHub Actions 与回滚发布。
+
+英文伴随文档：[README.en.md](README.en.md)、[docs/development-guide.en.md](docs/development-guide.en.md)、[docs/deployment-guide.en.md](docs/deployment-guide.en.md)、[supabase/README.en.md](supabase/README.en.md)。中文版本是默认入口。
+
+## 硬约束
+
+违反这些会造成安全事件或数据损坏，不是风格偏好：
+
+- 浏览器**只**通过 Supabase Auth 建立会话，不直接写业务表或私有 Storage Bucket。
+- 所有业务写操作必须经过 Next.js Route Handlers，由服务端校验身份、所有权和管理员权限。
+- `SUPABASE_SERVICE_ROLE_KEY` 和 AI Key 只存在于服务端环境变量。不写入浏览器代码、文档、测试快照或日志。
+- 公开分享页只读取最近一次发布生成的不可变快照，不读草稿。
+- AI 未配置、超时或输出非法时**必须明确报错**，不允许用兜底内容伪造成功。
+- 静态检查用 Biome（`pnpm lint`），**不使用 ESLint**。
+- 不运行任何 Git 命令。
+- `supabase/platform.sql` 是唯一数据库初始化入口，不维护拆分迁移。
+
+## 技术栈与运行前提
+
+| 项 | 值 |
+| --- | --- |
+| 包管理器 | pnpm 11.21.0（`pnpm-lock.yaml` 锁定） |
+| Node.js | ≥ 22.13.0（`.nvmrc` 固定 CI 版本） |
+| 框架 | Next.js 15.5.21 App Router + Turbopack |
+| UI | React 19、Tailwind CSS 4、Radix UI、lucide-react、sonner |
+| 校验 | Zod 4 |
+| 数据库 | Supabase PostgreSQL，通过 `service_role` 访问 |
+| 静态检查 | Biome 2.2.6 |
+
+端口：`pnpm dev` 用 3000，`pnpm start` 用 3001，Playwright 通过 `PLAYWRIGHT_PORT` 覆盖。
+
+## 常用命令
+
+```bash
+pnpm install --frozen-lockfile
+pnpm dev                # 开发服务器
+pnpm check              # lint + typecheck + test，提交前跑这个
+pnpm lint               # biome check .
+pnpm typecheck          # tsc --noEmit
+pnpm test               # vitest run
+pnpm test:coverage      # 带覆盖率门禁
+pnpm test:e2e           # Playwright
+```
+
+覆盖率门禁只覆盖 `src/shared/resume-schema/`、`src/server/auth/`、`src/server/domain/` 三个目录：语句/函数/行 ≥ 90%，分支 ≥ 75%。其他目录写了测试但不计入门禁。
+
+## 目录职责
+
+```text
+src/app/           页面、布局、Route Handlers
+src/components/ui/ 基础 UI 组件
+src/features/      编辑器、渲染器、模板、认证、公告、工作台、着陆页
+src/lib/           浏览器/服务端 Supabase 会话辅助、通用工具
+src/server/        认证、领域服务、仓储、资源存储、AI、HTTP 辅助
+src/shared/        客户端与服务端共享的 Schema、模板定义、设计令牌
+supabase/          platform.sql（唯一初始化脚本）、update.sql（增量）
+tests/e2e/         Playwright 端到端测试
+docs/              中文开发与部署文档
+```
+
+分层依赖方向（不可逆向）：
+
+```text
+Route Handler → Domain Service → Repository 接口 → Repository 实现 → Supabase
+```
+
+授权和业务规则只在 Domain Service 里，Route Handler 不自己拼判断，Repository 不含业务规则。
+
+## 数据库
+
+- [supabase/platform.sql](supabase/platform.sql)：唯一初始化入口。可重复执行（`create table if not exists` / `on conflict do nothing` /幂等的 RLS 语句）。
+- [supabase/update.sql](supabase/update.sql)：**增量脚本**，只摘录 `platform.sql` 中 `public.announcements` 的语句，供已初始化的库补齐公告表。不是第二事实来源，改公告表结构时必须同步改两个文件。
+- [supabase/README.md](supabase/README.md)：初始化内容、注册邮箱域名限制、执行后检查项。
+
+业务表：`resumes`、`resume_publications`、`resume_assets`、`ai_generations`、`announcements`、`templates`。
+
+安全模型是双重拒绝：所有业务表 `enable row level security` 但**不创建任何 policy**，同时对 `anon` 和 `authenticated` 执行 `revoke all`。即使表级权限泄漏，Policy 层仍无行可见。只有 `service_role` 被 `grant all`（自带 `bypassrls`）。
+
+## 环境变量
+
+完整清单见 `.env.example` 和 [docs/development-guide.md](docs/development-guide.md) 的环境变量表。新增变量必须同步 `.env.example`、README 和相关文档。
+
+关键的几个：
+
+| 变量 | 说明 |
+| --- | --- |
+| `RESUME_DATA_BACKEND` | `supabase` 或 `file`。生产环境只允许 `supabase`，`file` 会直接抛错拒绝启动 |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | 仅服务端 |
+| `ADMIN_USER_ID` | 管理员 UUID。**生产环境必填**，缺失则拒绝启动；只有单个管理员 |
+| `AUTH_TEST_USER_*` | 仅 Playwright。生产环境配置会抛错 |
+
+## 权限模型
+
+管理员身份只有一处判定：`userId === ADMIN_USER_ID`（`src/server/auth/auth-context.ts`）。`Actor.isAdmin` 在领域层的语义是：可跨用户读写任意简历、绕过 15 份简历配额、在工作台看到全库列表。Preview 会话的 `isAdmin` 恒为 `false`。
+
+全局公告轮播是平台级共享数据，没有归属用户：**登录后所有用户读取同一条列表，只有管理员可以写入**，成员和 Preview 写入返回 403。管理员的全量列表由工作台服务端组件作为 props 下发，不开放列表读取端点。
+
+## 测试约定
+
+- 单元测试与源码相邻，命名 `<source>.test.ts`，只在 `src/` 下（`tests/` 被显式排除）。运行环境是 node，不是 jsdom。
+- Supabase 依赖用三种方式隔离：构造函数注入 fake client、`InMemory*Repository` 替身、`vi.mock` 模块替换。
+- E2E 使用文件后端（`RESUME_DATA_BACKEND=file`）和独立数据目录，不连接生产 Supabase。
+- `PLAYWRIGHT_AS_ADMIN=1 pnpm test:e2e` 让同一套 dev server 以管理员身份启动，用于验证管理员专属界面。该开关只改变注入的测试身份，不改变生产鉴权逻辑。
+- 修复 Bug 至少补一个能失败后通过的回归测试，纯文档改动除外。
+
+## 约定与陷阱
+
+- 文件名小写连字符（`resume-json-editor.tsx`），函数小驼峰，React 组件 PascalCase。
+- 不为省事引入 `any`。
+- 新增复杂逻辑优先抽成纯函数并补单元测试。
+- `FileResumeRepository` 只属于测试路径，生产路径禁止引入。
+- Monaco 使用 `public/monaco/vs` 的本地托管资源，不改回 CDN。
+- 模板系统以 `TemplateScheme` / `WebTemplateScheme` 配置驱动，不为单个模板复制渲染逻辑。
+- 数字输入组件**不得自动修正**用户输入，失焦或回车时只在非法时抛错或保持原状。

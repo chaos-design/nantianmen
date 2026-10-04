@@ -41,6 +41,9 @@ Résumé Lab 是一个基于结构化 JSON、可视化编辑器和发布快照�
 - 不把 `.next/`、`coverage/`、`.data/`、`playwright-report/`、`test-results/`、`node_modules/` 等生成目录作为手工改动对象。
 - 不在生产路径引入本地文件 Repository；它只属于测试路径。
 - 不新增分散的 Supabase 迁移或种子 SQL；项目唯一初始化入口是 `supabase/platform.sql`。
+  唯一例外是 `supabase/update.sql`：它只摘录 `platform.sql` 中 `public.announcements`
+  的语句，供已初始化的库补齐公告表。它不是第二事实来源，改公告表结构时必须
+  同步改两个文件。
 - 不用兜底模板伪造 AI 结果。AI 未配置、超时或输出结构非法时必须明确报错。
 - 数字输入组件不得自动修正用户输入。失焦或回车时仅在非法时抛错或保留原状。
 - 图片尺寸允许宽高为 `0`；边界校验需要满足 A4 画布限制。

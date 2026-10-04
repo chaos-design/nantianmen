@@ -28,6 +28,7 @@ A4 分页预览、Web 简历、模板切换、资源上传、AI 内容建议、�
 - 业务数据和发布快照存储于 Supabase PostgreSQL。
 - 简历图片存储于私有 Supabase Storage Bucket。
 - 公开分享页只读取最近一次发布生成的不可变快照。
+- 全局公告轮播登录后可读，只有管理员可写；公告不含归属用户。
 
 ## 2. 技术架构
 
@@ -63,10 +64,11 @@ flowchart LR
 src/
 ├── app/                    页面、布局和 Route Handlers
 ├── components/ui/          基础 UI 组件
-├── features/               编辑器、渲染器、模板、认证和工作台
+├── features/               编辑器、渲染器、模板、认证、公告和工作台
 ├── lib/supabase/           浏览器/服务端 Supabase 会话辅助
 ├── server/                 认证、领域服务、仓储、资源和 AI
 └── shared/                 跨客户端和服务端共享的 Schema 与设计令牌
+                           （含 announcement/ 公告契约）
 supabase/
 ├── platform.sql            唯一数据库初始化 SQL
 └── config.toml             Supabase CLI 本地服务配置
@@ -142,13 +144,19 @@ pnpm install --frozen-lockfile
 RLS、权限收敛、认证 Hook、发布函数和私有 Storage Bucket。项目不维护拆分迁移或种子 SQL。
 执行后确认：
 
-- `resumes`、`resume_publications`、`resume_assets` 等表已创建。
+- `resumes`、`resume_publications`、`resume_assets`、`announcements` 等表已创建。
 - 表已启用 Row Level Security。
 - `publish_resume_snapshot` 函数只允许 `service_role` 执行。
 - `resume-assets` Bucket 存在且保持私有。
+- `announcements` 表已写入一条欢迎公告。
 
 `supabase/config.toml` 已关闭自动迁移和种子加载，因此 `supabase db reset` 不会自动
 创建业务表。重建本地环境时，需要重新执行 `supabase/platform.sql` 的完整内容。
+
+已初始化的数据库升级到当前结构时，执行 `supabase/update.sql`。该文件只摘录
+`platform.sql` 中与 `public.announcements` 相关的语句，两处内容必须同步修改，
+否则数据库结构会出现两个来源。全新环境不需要执行它。建表后接口仍返回
+`PGRST205` 属于 PostgREST schema cache 未刷新，等待片刻重试，不要误判为建表失败。
 
 在 Supabase Auth 中完成：
 
@@ -411,7 +419,21 @@ pnpm test:e2e
 - 上传失败时检查 MIME 类型、5 MiB 限制、图片尺寸和用户归属。
 - 数据读取异常时先确认 `RESUME_DATA_BACKEND=supabase`，不要依赖文件后端回退。
 
-### 9.4 AI 内容建议
+### 9.4 平台公告轮播
+
+- 公告存放在 `announcements` 表，是平台级共享数据，没有归属用户。
+- 登录后由 `GET /api/announcements` 下发当前生效的公告，工作台页首渲染轮播。
+- 管理员在工作台右上角「公告配置」中增删改，入口仅对管理员渲染。
+- 服务端在 `AnnouncementService` 内强制 `isAdmin`，成员和 Preview 都会得到 403，
+  不依赖前端隐藏按钮。
+- 「停用」对所有人隐藏；用户「关闭」只写入当前浏览器的 `localStorage`。
+- 关闭记录带 `updatedAt`，管理员改过内容后公告会重新出现。
+- 公告链接只允许站内绝对路径或 `http(s)` 地址，`javascript:` 等协议会被 Schema 和
+  数据库约束同时拒绝。
+- 调试管理员界面时可用 `PLAYWRIGHT_AS_ADMIN=1 pnpm test:e2e`，该开关只改变注入的
+  测试身份，不改变生产鉴权逻辑。
+
+### 9.5 AI 内容建议
 
 - 全局三个 `AI_*` 变量完整时，为没有个人配置的可编辑用户预填默认 Provider。
 - 浏览器个人配置优先，仅保存在当前用户的 `localStorage` 中。
@@ -440,7 +462,7 @@ AI 功能会直接报 502。`findMissingStructureMarkers` 负责检测，探针�
 长度上限）不能删，它们不是文案而是契约。`src/shared/resume-ai/resume-ai-prompt-text.test.ts`
 会校验默认文案仍然包含这些约束。
 
-### 9.5 Monaco 静态资源
+### 9.6 Monaco 静态资源
 
 JSON 编辑器通过 `@monaco-editor/react` 加载本地 AMD 资源。仓库路径
 `public/monaco/vs` 在运行时对应 `/monaco/vs`，当前只保留 JSON 编辑所需文件：
@@ -469,7 +491,7 @@ JSON 编辑器通过 `@monaco-editor/react` 加载本地 AMD 资源。仓库路�
 [Monaco Editor 官方仓库](https://github.com/microsoft/monaco-editor)或
 [npm 包](https://www.npmjs.com/package/monaco-editor)获取，版本必须与项目依赖一致。
 
-### 9.6 常见问题
+### 9.7 常见问题
 
 | 现象 | 排查方法 |
 | --- | --- |

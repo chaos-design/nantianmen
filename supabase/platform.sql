@@ -259,6 +259,64 @@ comment on column public.templates.definition is
   '用于未来动态加载模板的模板定义 JSON。';
 
 -- ---------------------------------------------------------------------------
+-- 全局公告轮播槽位。
+-- 公告是平台级共享数据，没有归属用户；应用在服务端校验管理员身份后
+-- 使用 service role 读写，浏览器始终不直接访问本表。
+-- ---------------------------------------------------------------------------
+create table if not exists public.announcements (
+  id uuid primary key default gen_random_uuid(),
+  level text not null default 'info' check (level in ('info', 'success', 'warning', 'danger')),
+  title text not null check (char_length(title) between 1 and 80),
+  body text not null check (char_length(body) between 1 and 240),
+  link_label text not null default '' check (char_length(link_label) <= 24),
+  link_href text not null default ''
+    check (
+      char_length(link_href) <= 500
+      -- 使用 ~* 而不是 ~：应用侧 URL 解析会把协议归一化为小写，
+      -- 这里必须同样接受 HTTP:// 这类大写写法，否则合法输入会被数据库拒绝。
+      and (link_href = '' or link_href ~* '^(/|https?://)')
+      and link_href not like '//%'
+    ),
+  enabled boolean not null default true,
+  sort_order integer not null default 0 check (sort_order between 0 and 999),
+  starts_at timestamptz,
+  ends_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint announcements_link_pair_check check (
+    (link_label = '') = (link_href = '')
+  ),
+  constraint announcements_time_window_check check (
+    starts_at is null or ends_at is null or ends_at > starts_at
+  )
+);
+
+comment on table public.announcements is
+  '登录后对所有用户展示的全局公告轮播条目，只有管理员可以写入。';
+comment on column public.announcements.level is
+  '展示级别，决定轮播槽位的配色：info、success、warning、danger。';
+comment on column public.announcements.enabled is
+  '管理员停用开关。停用后对所有用户隐藏，与用户本地关闭无关。';
+comment on column public.announcements.sort_order is
+  '排序权重，数值越小越靠前。';
+comment on column public.announcements.starts_at is
+  '可选生效开始时间，为空表示不设下界。';
+comment on column public.announcements.ends_at is
+  '可选生效结束时间，为空表示不设上界，到达该时刻后不再展示。';
+comment on column public.announcements.link_href is
+  '可选公告链接，只允许站内绝对路径或 http(s) 地址，为空表示不提供链接。';
+
+insert into public.announcements (id, level, title, body, sort_order)
+values (
+  '00000000-0000-4000-8000-00000000a001',
+  'info',
+  '欢迎使用 Résumé Lab',
+  '所有简历数据都保存在你自己的账号下，草稿会自动保存。',
+  0
+)
+on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------------
 -- 应用查询路径所需索引。
 -- ---------------------------------------------------------------------------
 create index if not exists resumes_owner_updated_at_idx
@@ -269,6 +327,8 @@ create index if not exists ai_generations_resume_id_idx
   on public.ai_generations (resume_id, created_at desc);
 create index if not exists resume_assets_resume_id_idx
   on public.resume_assets (resume_id);
+create index if not exists announcements_sort_order_idx
+  on public.announcements (sort_order, created_at desc);
 
 -- ---------------------------------------------------------------------------
 -- RLS 和权限。
@@ -278,18 +338,21 @@ alter table public.resume_publications enable row level security;
 alter table public.resume_assets enable row level security;
 alter table public.ai_generations enable row level security;
 alter table public.templates enable row level security;
+alter table public.announcements enable row level security;
 
 revoke all on table public.resumes from anon, authenticated;
 revoke all on table public.resume_publications from anon, authenticated;
 revoke all on table public.resume_assets from anon, authenticated;
 revoke all on table public.ai_generations from anon, authenticated;
 revoke all on table public.templates from anon, authenticated;
+revoke all on table public.announcements from anon, authenticated;
 
 grant all on table public.resumes to service_role;
 grant all on table public.resume_publications to service_role;
 grant all on table public.resume_assets to service_role;
 grant all on table public.ai_generations to service_role;
 grant all on table public.templates to service_role;
+grant all on table public.announcements to service_role;
 
 -- ---------------------------------------------------------------------------
 -- 发布函数。
