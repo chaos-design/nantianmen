@@ -1447,22 +1447,61 @@
 .announcement-admin-item {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 14px 16px;
 }
 
-.announcement-admin-item > header,
-.announcement-admin-item > footer {
+.announcement-admin-item-head {
   display: flex;
+  min-width: 0;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.announcement-admin-item > footer {
+.announcement-admin-item-head strong {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 列表里只需要看清公告写了什么，不该把 240 字全文铺开占满抽屉。 */
+.announcement-admin-item-body {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.announcement-admin-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.announcement-admin-item-meta > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.76rem;
+}
+
+.announcement-admin-item-meta dt {
+  color: var(--muted-foreground);
+}
+
+.announcement-admin-item-actions {
+  display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 /* 阻断保存的原因必须写出来，不能只把按钮置灰。 */
@@ -1473,15 +1512,100 @@
 }
 
 .announcement-admin-fields {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-/* 时间选择器触发按钮与 Input 同高（h-9 由组件类名给出），否则同一行会出现台阶。 */
+/* 表单按类别分组，分组之间用分隔线而不是靠空白猜边界。 */
+.announcement-admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.announcement-admin-section + .announcement-admin-section {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.announcement-admin-section > header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.announcement-admin-section > header h3 {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.announcement-admin-section > header p {
+  min-width: 0;
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+/*
+ * 标签列固定宽度、控件列自适应：
+ * 标签右对齐贴住同一条基线，控件左边缘连成一条直线，跨分组也保持同一列宽。
+ * 说明文字落在第二行的控件列下，不占标签列，因此不会把控件挤歪。
+ */
+.announcement-admin-rows {
+  --announcement-admin-label-width: 5rem;
+  display: grid;
+  grid-template-columns: var(--announcement-admin-label-width) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 12px;
+}
+
+/* 每行用 subgrid 继承外层列宽，标签列因此不必在每行重复声明宽度。 */
+.announcement-admin-row {
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+}
+
+.announcement-admin-row > [data-slot="field-label"] {
+  grid-column: 1;
+}
+
+.announcement-admin-row > [data-slot="field-description"] {
+  grid-column: 2;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.announcement-admin-row[data-invalid="true"] > [data-slot="field-label"] {
+  color: var(--destructive);
+}
+
+/* 开关比输入框矮，补一层与输入框同高的容器，开关才能和相邻控件对齐。 */
+.announcement-admin-switch {
+  display: flex;
+  height: var(--control-md);
+  align-items: center;
+}
+
+.announcement-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+/* 时间选择器触发按钮与 Input 同高，否则同一行会出现台阶。 */
 .announcement-time-trigger {
   width: 100%;
   min-width: 0;
+  height: var(--control-md);
   justify-content: flex-start;
   gap: 0.4rem;
   padding-inline: 0.75rem;
@@ -1493,6 +1617,16 @@
   width: auto;
   flex-direction: column;
   gap: 0.6rem;
+}
+
+/*
+ * 日历展开后有 350px 以上，叠上时段选择会顶满整块抽屉。
+ * 限高并内部滚动：滚动条只在这个容器里，不会连带翻动抽屉正文。
+ */
+.announcement-time-calendar {
+  max-height: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .announcement-time-slots {
