@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
+  announcementDefaultHour,
+  announcementDefaultMinute,
   announcementMinuteOptions,
   composeAnnouncementIso,
   createDefaultAnnouncementParts,
@@ -48,9 +50,13 @@ describe("announcement local time conversion", () => {
   it("defaults a fresh pick to 09:00 of the current day", () => {
     const parts = createDefaultAnnouncementParts(new Date(2026, 4, 20, 23, 30))
 
-    expect(parts.hour).toBe(9)
-    expect(parts.minute).toBe(0)
+    expect(parts.hour).toBe(announcementDefaultHour)
+    expect(parts.minute).toBe(announcementDefaultMinute)
     expect(parts.date.getDate()).toBe(20)
+    // 默认时刻必须是常量：组件在模块顶层用它当下拉的初始值，
+    // 如果这里随调用时刻变化，触发器文案会和服务端不一致。
+    expect(announcementDefaultHour).toBe(9)
+    expect(announcementDefaultMinute).toBe(0)
   })
 
   it("offers minute options on the configured step", () => {

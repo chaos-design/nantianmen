@@ -1302,7 +1302,8 @@
   width: 1.15rem;
   height: 1.15rem;
   flex-shrink: 0;
-  color: var(--announcement-accent);
+  /* 强调色直接用实测只有 4.4:1（danger 级红），与徽标文字同样提亮后才过 4.5:1。 */
+  color: color-mix(in oklab, var(--announcement-accent) 58%, var(--foreground));
 }
 
 .announcement-carousel-level {
@@ -1477,19 +1478,14 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
-/* 时间选择器触发按钮必须和 Input 等高，否则同一行里会出现台阶。 */
+/* 时间选择器触发按钮与 Input 同高（h-9 由组件类名给出），否则同一行会出现台阶。 */
 .announcement-time-trigger {
   width: 100%;
   min-width: 0;
-  height: 2.25rem;
   justify-content: flex-start;
   gap: 0.4rem;
   padding-inline: 0.75rem;
   font-weight: 400;
-}
-
-.announcement-time-trigger [data-placeholder="true"] {
-  color: var(--muted-foreground);
 }
 
 .announcement-time-popover {

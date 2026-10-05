@@ -16,6 +16,15 @@ export interface AnnouncementDateTimeParts {
 /** 公告时间选择器的分钟步长。5 分钟足够表达公告窗口，也避免 60 项下拉。 */
 export const announcementMinuteStep = 5
 
+/**
+ * 未设置时间时首次选择的默认时刻。
+ *
+ * 单独导出常量而不是让调用方各调一次 `createDefaultAnnouncementParts()`：
+ * 那个函数会求值 `new Date()`，在模块顶层调用等于把「导入时刻」固化下来。
+ */
+export const announcementDefaultHour = 9
+export const announcementDefaultMinute = 0
+
 /** 分钟下拉的候选项。 */
 export const announcementMinuteOptions = Array.from(
   { length: 60 / announcementMinuteStep },
@@ -80,7 +89,7 @@ export function createDefaultAnnouncementParts(
 ): AnnouncementDateTimeParts {
   return {
     date: now,
-    hour: 9,
-    minute: 0,
+    hour: announcementDefaultHour,
+    minute: announcementDefaultMinute,
   }
 }

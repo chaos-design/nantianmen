@@ -51,6 +51,7 @@ flowchart LR
 | Web 框架 | Next.js 15 App Router、React 19 |
 | 开发语言 | TypeScript 5 |
 | 样式 | Tailwind CSS 4、项目级 CSS、Radix UI |
+| UI 组件 | `src/components/ui/` 下的 shadcn 风格组件；日期选择基于 `react-day-picker` |
 | 数据与认证 | Supabase PostgreSQL、Auth、Storage |
 | 数据校验 | Zod 4 |
 | 单元/集成测试 | Vitest 3、V8 Coverage |

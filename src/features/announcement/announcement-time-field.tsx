@@ -14,6 +14,8 @@ import {
   SelectValue,
 } from "../../components/ui/select"
 import {
+  announcementDefaultHour,
+  announcementDefaultMinute,
   announcementMinuteOptions,
   composeAnnouncementIso,
   createDefaultAnnouncementParts,
@@ -22,9 +24,6 @@ import {
 } from "./announcement-time"
 
 const hourOptions = Array.from({ length: 24 }, (_, hour) => hour)
-
-/** 未设置时的兜底时间点，同时也是小时/分钟下拉的默认选中值。 */
-const defaultParts = createDefaultAnnouncementParts()
 
 function padTime(value: number) {
   return String(value).padStart(2, "0")
@@ -45,6 +44,9 @@ interface AnnouncementTimeFieldProps {
  *
  * 选择即生效，不做「暂存草稿」：面板本身就是逐项配置区，
  * 每次改动立即写回上层草稿，关闭面板时不存在需要确认的时间状态。
+ *
+ * 未设置时只改小时或分钟会以「当天」为日期，因为时间必须依附于某一天；
+ * 面板里的「今天 09:00」按钮把这个隐含规则显式写了出来。
  */
 export function AnnouncementTimeField({
   id,
@@ -55,8 +57,10 @@ export function AnnouncementTimeField({
   const [open, setOpen] = useState(false)
   const parts = readAnnouncementDateTimeParts(value)
   const display = formatAnnouncementDateTime(value)
-  const hour = parts?.hour ?? defaultParts.hour
-  const minute = parts?.minute ?? defaultParts.minute
+  // 用解析结果而不是原始 value 判断是否已设置：非法字符串不能显示成已设置。
+  const isSet = display !== ""
+  const hour = parts?.hour ?? announcementDefaultHour
+  const minute = parts?.minute ?? announcementDefaultMinute
 
   function commit(next: { date?: Date; hour?: number; minute?: number }) {
     const base = parts ?? createDefaultAnnouncementParts()
@@ -78,12 +82,12 @@ export function AnnouncementTimeField({
             id={id}
             type="button"
             variant="outline"
-            className="announcement-time-trigger"
+            className="announcement-time-trigger h-9"
             aria-haspopup="dialog"
             data-testid={`${id}-trigger`}
           >
-            {value ? <ClockIcon data-icon="inline-start" /> : null}
-            <span data-placeholder={value ? undefined : "true"}>
+            {isSet ? <ClockIcon data-icon="inline-start" /> : null}
+            <span className={isSet ? undefined : "text-muted-foreground"}>
               {display || "未设置"}
             </span>
           </Button>
@@ -104,7 +108,7 @@ export function AnnouncementTimeField({
               value={String(hour)}
               onValueChange={(next) => commit({ hour: Number(next) })}
             >
-              <SelectTrigger aria-label={`${label}小时`} className="flex-1">
+              <SelectTrigger aria-label={`${label}的小时`} className="flex-1">
                 {/*
                  * SelectValue 不能只靠 items 解析文案：下拉内容默认不挂载，
                  * 受控 value 在首次展开前查不到对应项，触发器会显示成空白。
@@ -124,7 +128,7 @@ export function AnnouncementTimeField({
               value={String(minute)}
               onValueChange={(next) => commit({ minute: Number(next) })}
             >
-              <SelectTrigger aria-label={`${label}分钟`} className="flex-1">
+              <SelectTrigger aria-label={`${label}的分钟`} className="flex-1">
                 <SelectValue>{`${padTime(minute)} 分`}</SelectValue>
               </SelectTrigger>
               <SelectContent>
