@@ -134,7 +134,7 @@ export function AnnouncementTimeField({
                  */}
                 <SelectValue>{`${padTime(hour)} 时`}</SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="announcement-time-select-content">
                 {hourOptions.map((option) => (
                   <SelectItem key={option} value={String(option)}>
                     {`${padTime(option)} 时`}
@@ -149,7 +149,7 @@ export function AnnouncementTimeField({
               <SelectTrigger aria-label={`${label}的分钟`} className="flex-1">
                 <SelectValue>{`${padTime(minute)} 分`}</SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="announcement-time-select-content">
                 {announcementMinuteOptions.map((option) => (
                   <SelectItem key={option} value={String(option)}>
                     {`${padTime(option)} 分`}

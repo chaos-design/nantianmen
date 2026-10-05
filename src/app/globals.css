@@ -1634,6 +1634,20 @@
   gap: 0.5rem;
 }
 
+/*
+ * 时段下拉的候选项有 24 个，每项 32px，自然高度 776px。
+ *
+ * SelectContent 自带的 `max-h-(--radix-select-content-available-height)`
+ * 只挡视口不够用：弹层靠上、视口偏高时这个值有 1200px，下拉会整条铺开，
+ * 盖住日历和「今天 09:00」。这里加一道硬上限，12rem 露出 6 项。
+ *
+ * 用 min() 而不是直接写死：视口不够时仍让 available-height 生效，
+ * 两条约束取更紧的那个，不会出现下拉超出屏幕。
+ */
+.announcement-time-select-content {
+  max-height: min(12rem, var(--radix-select-content-available-height));
+}
+
 .announcement-time-actions {
   display: flex;
   align-items: center;

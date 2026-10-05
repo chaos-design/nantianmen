@@ -313,4 +313,49 @@ test.describe("platform announcement carousel", () => {
 
     await page.keyboard.press("Escape")
   })
+
+  test("caps the hour and minute dropdowns inside a scrollable list", async ({
+    page,
+  }) => {
+    test.skip(!runAsAdmin, "需要 PLAYWRIGHT_AS_ADMIN=1 才能打开配置面板")
+
+    await clearAllAnnouncements(page)
+    await page.goto("/workspace")
+    await openAnnouncementAdmin(page)
+    await page.getByTestId("announcement-create").click()
+
+    await page.getByTestId("announcement-form-starts-at-trigger").click()
+
+    // 小时下拉有 24 项、每项 32px，自然高度 776px。
+    // SelectContent 自带的 available-height 只挡视口，弹层靠上时挡不住。
+    await page.getByLabel("开始时间的小时").click()
+    const hourList = page.getByRole("listbox")
+    await expect(hourList).toBeVisible()
+    const hourMetrics = await hourList.evaluate((node) => ({
+      maxHeight: getComputedStyle(node).maxHeight,
+      clientHeight: node.clientHeight,
+      scrollHeight: node.scrollHeight,
+    }))
+    expect(parseFloat(hourMetrics.maxHeight)).toBeLessThanOrEqual(12 * 16)
+    expect(hourMetrics.scrollHeight).toBeGreaterThan(hourMetrics.clientHeight)
+    await page.keyboard.press("Escape")
+
+    // 分钟下拉 12 项，同样超过上限，行为必须一致。
+    await page.getByLabel("开始时间的分钟").click()
+    const minuteMetrics = await page.getByRole("listbox").evaluate((node) => ({
+      maxHeight: getComputedStyle(node).maxHeight,
+      clientHeight: node.clientHeight,
+      scrollHeight: node.scrollHeight,
+    }))
+    expect(parseFloat(minuteMetrics.maxHeight)).toBeLessThanOrEqual(12 * 16)
+    expect(minuteMetrics.scrollHeight).toBeGreaterThan(minuteMetrics.clientHeight)
+
+    // 选一个值确认限高没有破坏交互：下拉仍然能选到 30 分。
+    await page.getByRole("option", { name: "30 分" }).click()
+    await expect(page.getByTestId("announcement-form-starts-at-trigger")).toContainText(
+      "09:30",
+    )
+
+    await page.keyboard.press("Escape")
+  })
 })
