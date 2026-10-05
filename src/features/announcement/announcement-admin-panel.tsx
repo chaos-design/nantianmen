@@ -1,19 +1,11 @@
 "use client"
 
-import { MegaphoneIcon, PlusIcon, SettingsIcon, Trash2Icon } from "lucide-react"
+import { MegaphoneIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../../components/ui/dialog"
 import {
   Field,
   FieldContent,
@@ -47,33 +39,13 @@ import {
   deleteAnnouncement,
   updateAnnouncement,
 } from "./announcement-api"
+import { AnnouncementTimeField } from "./announcement-time-field"
 
 const levelLabels: Record<AnnouncementLevel, string> = {
   info: "通知",
   success: "好消息",
   warning: "提醒",
   danger: "重要",
-}
-
-/** 时间输入框使用 datetime-local，需要在 UTC 与本地时间之间转换。 */
-function toLocalInputValue(iso: string | null): string {
-  if (!iso) {
-    return ""
-  }
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) {
-    return ""
-  }
-  const offsetAdjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
-  return offsetAdjusted.toISOString().slice(0, 16)
-}
-
-function toIsoValue(value: string): string | null {
-  if (!value.trim()) {
-    return null
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
 
 function toInput(announcement: Announcement): AnnouncementInput {
@@ -229,39 +201,32 @@ function AnnouncementEditor({ initial, onChange, idPrefix }: AnnouncementEditorP
         <FieldDescription>数值越小越靠前。</FieldDescription>
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor={`${idPrefix}-starts-at`}>开始时间</FieldLabel>
-        <Input
-          id={`${idPrefix}-starts-at`}
-          type="datetime-local"
-          value={toLocalInputValue(initial.startsAt)}
-          onChange={(event) =>
-            onChange({ ...initial, startsAt: toIsoValue(event.target.value) })
-          }
-        />
-      </Field>
+      <AnnouncementTimeField
+        id={`${idPrefix}-starts-at`}
+        label="开始时间"
+        value={initial.startsAt}
+        onChange={(startsAt) => onChange({ ...initial, startsAt })}
+      />
 
-      <Field>
-        <FieldLabel htmlFor={`${idPrefix}-ends-at`}>结束时间</FieldLabel>
-        <Input
-          id={`${idPrefix}-ends-at`}
-          type="datetime-local"
-          value={toLocalInputValue(initial.endsAt)}
-          onChange={(event) =>
-            onChange({ ...initial, endsAt: toIsoValue(event.target.value) })
-          }
-        />
-      </Field>
+      <AnnouncementTimeField
+        id={`${idPrefix}-ends-at`}
+        label="结束时间"
+        value={initial.endsAt}
+        onChange={(endsAt) => onChange({ ...initial, endsAt })}
+      />
     </div>
   )
 }
 
 /**
- * 管理员公告配置面板。
+ * 管理员公告配置面板体。
  *
  * 全量列表由工作台服务端组件作为 props 下发，权限判断落在页面边界，
  * 服务端不会为普通成员渲染这个组件。写操作仍由 API 独立强制 `isAdmin`，
  * 因此这里不能被当成授权依据。
+ *
+ * 抽屉外壳在 `announcement-admin-entry.tsx`，本组件只负责表单与列表，
+ * 并由入口按需动态加载。
  */
 export function AnnouncementAdminPanel({
   initialAnnouncements,
@@ -269,7 +234,6 @@ export function AnnouncementAdminPanel({
   initialAnnouncements: AnnouncementOverview
 }) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [rows, setRows] = useState<AnnouncementRow[]>(() =>
     toRows(initialAnnouncements),
   )
@@ -370,121 +334,86 @@ export function AnnouncementAdminPanel({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen)
-        if (!nextOpen) {
-          // 关闭时丢弃未保存的新草稿，避免下次打开看到残留。
-          setRows((current) => current.filter((row) => row.id !== null))
-          router.refresh()
-        }
-      }}
-    >
-      <DialogTrigger asChild>
+    <div className="announcement-admin-panel" data-testid="announcement-admin-body">
+      <div className="announcement-admin-toolbar">
+        <Badge variant="outline">
+          <MegaphoneIcon data-icon="inline-start" />
+          {persistedCount} / {maximumAnnouncementCount}
+        </Badge>
         <Button
           type="button"
-          variant="outline"
           size="sm"
-          data-testid="open-announcement-admin"
+          disabled={persistedCount >= maximumAnnouncementCount}
+          onClick={handleCreate}
+          data-testid="announcement-create"
         >
-          <SettingsIcon data-icon="inline-start" />
-          公告配置
+          <PlusIcon data-icon="inline-start" />
+          新建公告
         </Button>
-      </DialogTrigger>
-      <DialogContent
-        className="announcement-admin-dialog"
-        data-testid="announcement-admin-panel"
-      >
-        <DialogHeader>
-          <DialogTitle>全局公告配置</DialogTitle>
-          <DialogDescription>
-            公告在登录后对所有用户展示。用户可以自行关闭单条公告，停用公告则对所有人隐藏。
-          </DialogDescription>
-        </DialogHeader>
+      </div>
 
-        <div className="announcement-admin-toolbar">
-          <Badge variant="outline">
-            <MegaphoneIcon data-icon="inline-start" />
-            {persistedCount} / {maximumAnnouncementCount}
-          </Badge>
-          <Button
-            type="button"
-            size="sm"
-            disabled={persistedCount >= maximumAnnouncementCount}
-            onClick={handleCreate}
-            data-testid="announcement-create"
-          >
-            <PlusIcon data-icon="inline-start" />
-            新建公告
-          </Button>
-        </div>
+      {rows.length === 0 ? (
+        <p className="announcement-admin-empty">
+          还没有公告，点击「新建公告」开始配置。
+        </p>
+      ) : null}
 
-        {rows.length === 0 ? (
-          <p className="announcement-admin-empty">
-            还没有公告，点击「新建公告」开始配置。
-          </p>
-        ) : null}
-
-        <div className="announcement-admin-list">
-          {rows.map((row) => {
-            const isPending = pendingClientId === row.clientId
-            const isDirty =
-              row.saved === null ||
-              JSON.stringify(row.draft) !== JSON.stringify(row.saved)
-            // 复用服务端 Schema 判定能否保存：
-            // 与服务端同一份规则，避免出现「按钮可点但必然 422」的死路。
-            const validation = announcementInputSchema.safeParse(row.draft)
-            const blockingIssue = validation.success
-              ? null
-              : (validation.error.issues[0]?.message ?? "公告内容不符合格式要求")
-            return (
-              <article className="announcement-admin-item" key={row.clientId}>
-                <header>
-                  <Badge variant={row.draft.enabled ? "secondary" : "outline"}>
-                    {levelLabels[row.draft.level]}
-                  </Badge>
-                  <strong>{row.draft.title || "未命名公告"}</strong>
-                  {row.id === null ? <Badge variant="outline">未保存</Badge> : null}
-                  {!row.draft.enabled ? <Badge variant="outline">已停用</Badge> : null}
-                </header>
-                <AnnouncementEditor
-                  initial={row.draft}
-                  idPrefix={`announcement-${row.clientId}`}
-                  onChange={(next) => handleChange(row.clientId, next)}
-                />
-                <footer>
-                  {blockingIssue ? (
-                    <output className="announcement-admin-issue">
-                      {blockingIssue}
-                    </output>
-                  ) : null}
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="destructive"
-                    disabled={isPending}
-                    onClick={() => void handleDelete(row)}
-                  >
-                    <Trash2Icon data-icon="inline-start" />
-                    {row.id === null ? "放弃" : "删除"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={isPending || !isDirty || Boolean(blockingIssue)}
-                    onClick={() => void handleSave(row)}
-                    data-testid="announcement-save"
-                  >
-                    {isPending ? <Spinner data-icon="inline-start" /> : null}
-                    保存
-                  </Button>
-                </footer>
-              </article>
-            )
-          })}
-        </div>
-      </DialogContent>
-    </Dialog>
+      <div className="announcement-admin-list">
+        {rows.map((row) => {
+          const isPending = pendingClientId === row.clientId
+          const isDirty =
+            row.saved === null ||
+            JSON.stringify(row.draft) !== JSON.stringify(row.saved)
+          // 复用服务端 Schema 判定能否保存：
+          // 与服务端同一份规则，避免出现「按钮可点但必然 422」的死路。
+          const validation = announcementInputSchema.safeParse(row.draft)
+          const blockingIssue = validation.success
+            ? null
+            : (validation.error.issues[0]?.message ?? "公告内容不符合格式要求")
+          return (
+            <article className="announcement-admin-item" key={row.clientId}>
+              <header>
+                <Badge variant={row.draft.enabled ? "secondary" : "outline"}>
+                  {levelLabels[row.draft.level]}
+                </Badge>
+                <strong>{row.draft.title || "未命名公告"}</strong>
+                {row.id === null ? <Badge variant="outline">未保存</Badge> : null}
+                {!row.draft.enabled ? <Badge variant="outline">已停用</Badge> : null}
+              </header>
+              <AnnouncementEditor
+                initial={row.draft}
+                idPrefix={`announcement-${row.clientId}`}
+                onChange={(next) => handleChange(row.clientId, next)}
+              />
+              <footer>
+                {blockingIssue ? (
+                  <output className="announcement-admin-issue">{blockingIssue}</output>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  disabled={isPending}
+                  onClick={() => void handleDelete(row)}
+                >
+                  <Trash2Icon data-icon="inline-start" />
+                  {row.id === null ? "放弃" : "删除"}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isPending || !isDirty || Boolean(blockingIssue)}
+                  onClick={() => void handleSave(row)}
+                  data-testid="announcement-save"
+                >
+                  {isPending ? <Spinner data-icon="inline-start" /> : null}
+                  保存
+                </Button>
+              </footer>
+            </article>
+          )
+        })}
+      </div>
+    </div>
   )
 }

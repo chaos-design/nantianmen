@@ -4,14 +4,19 @@ import { expect, test } from "./fixtures"
 const runAsAdmin = process.env.PLAYWRIGHT_AS_ADMIN === "1"
 
 /**
- * 打开公告配置面板。
+ * 打开公告配置面板并等到面板体可用。
  *
- * 触发按钮是客户端组件：SSR 阶段就渲染出来了，但 React 水合之前点击没有响应。
- * 这里以「点击后面板是否出现」作为条件重试的依据，不用固定延时。
+ * 触发按钮是客户端组件：SSR 阶段就渲染出来了，但 React 水合之前点击没有响应，
+ * 这里以「点击后抽屉是否出现」作为条件重试的依据，不用固定延时。
+ *
+ * 抽屉出现后还要等面板体：面板体是动态 chunk（`next/dynamic`），挂载晚于抽屉本身。
+ * 只等抽屉会在面板体到达之前就读列表，把「还没加载」误判成「列表为空」。
+ * 抽屉一旦出现就不再点触发按钮，否则第二次点击会把抽屉关掉。
  */
 async function openAnnouncementAdmin(page: Page) {
   const trigger = page.getByTestId("open-announcement-admin")
   const panel = page.getByTestId("announcement-admin-panel")
+  const panelBody = page.getByTestId("announcement-admin-body")
   for (let attempt = 0; attempt < 4; attempt += 1) {
     await trigger.click()
     const opened = await panel
@@ -19,6 +24,7 @@ async function openAnnouncementAdmin(page: Page) {
       .then(() => true)
       .catch(() => false)
     if (opened) {
+      await panelBody.waitFor({ state: "visible", timeout: 20_000 })
       return
     }
   }

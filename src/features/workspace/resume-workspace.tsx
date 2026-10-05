@@ -12,7 +12,7 @@ import type { AuthContext } from "../../server/auth/auth-context"
 import type { AnnouncementOverview } from "../../server/domain/announcement-service"
 import type { ResumeListItem as ResumeListItemData } from "../../server/domain/resume-service"
 import { maximumMemberResumeCount } from "../../shared/resume-schema/resume-policy"
-import { AnnouncementAdminPanel } from "../announcement/announcement-admin-panel"
+import { AnnouncementAdminEntry } from "../announcement/announcement-admin-entry"
 import { SignOutButton } from "../auth/sign-out-button"
 import { resolveWorkspaceCreationMode } from "./workspace-creation-mode"
 import { WorkspaceHeader } from "./workspace-header"
@@ -64,7 +64,7 @@ export function ResumeWorkspace({
           <div className="workspace-account">
             {/* Preview 会话永远不是管理员，服务端也拒绝其写入，这里直接不渲染入口。 */}
             {actor.isAdmin && !previewMode && managedAnnouncements ? (
-              <AnnouncementAdminPanel initialAnnouncements={managedAnnouncements} />
+              <AnnouncementAdminEntry initialAnnouncements={managedAnnouncements} />
             ) : null}
             <SignOutButton />
           </div>
