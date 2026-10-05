@@ -38,7 +38,12 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   // dev 模式下 Turbopack 冷编译单个路由可达 20-40 秒，
   // 默认的 30 秒用例超时和 5 秒断言超时会把编译延迟误报成用例失败。
-  timeout: 180_000,
+  //
+  // 180 秒仍然不够：本地实测最长的「创建→编辑→发布→分享」整链路用例要 174 秒，
+  // 只剩 6 秒余量。GitHub runner 未必比本地快，CI 上这条用例必然在
+  // 「本地全绿、CI 超时」的边界上反复横跳。这里给到 5 分钟，
+  // 真实卡死仍会被超时拦住，同时不再把编译和机器差异当成失败。
+  timeout: 300_000,
   expect: { timeout: 30_000 },
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
@@ -56,7 +61,10 @@ export default defineConfig({
     command: `pnpm dev --port ${port}`,
     url: webServerURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    // 就绪探测要访问 /login，CI 上是全新 checkout 的冷启动：装依赖后第一次编译
+    // 路由全靠现场 Turbopack 冷编译。探测失败会直接终结整个 job，
+    // 这里放宽到 4 分钟，成本为零而收益是避免整轮重跑。
+    timeout: 240_000,
     env: {
       RESUME_DATA_BACKEND: "file",
       RESUME_FILE_DATABASE_PATH: path.join(e2eDataRoot, "resumes.json"),
