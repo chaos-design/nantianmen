@@ -26,6 +26,7 @@ Runtime boundaries:
 | Framework | Next.js 15 App Router, React 19 |
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4, project CSS, Radix UI |
+| UI components | shadcn-style components in `src/components/ui/`; the date picker is built on `react-day-picker` |
 | Validation | Zod 4 |
 | Data and auth | Supabase PostgreSQL, Auth, Storage |
 | Unit and integration tests | Vitest, V8 Coverage |

@@ -88,6 +88,26 @@
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
+  border-radius: var(--radius-sm);
+  /* 眼睛是次级操作，默认必须比密码文本弱，否则会被读成正文内容。 */
+  color: var(--muted-foreground);
+  transition:
+    color 180ms ease,
+    background 180ms ease;
+}
+
+/*
+ * 字段里有内容时眼睛要立刻可见：它是「我确实输入了密码」的唯一视觉确认，
+ * 藏到 hover 之后在触屏上等于不存在。
+ */
+.auth-password-field:has(input:not(:placeholder-shown)) [data-slot="button"] {
+  color: color-mix(in oklab, var(--foreground) 78%, var(--muted-foreground));
+}
+
+.auth-password-field [data-slot="button"]:hover,
+.auth-password-field [data-slot="button"]:focus-visible {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--accent) 62%, transparent);
 }
 
 .auth-login-shell {
@@ -709,7 +729,7 @@
   min-height: 1.5rem;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.45rem;
+  gap: 0.4rem;
   color: var(--muted-foreground);
   font-size: var(--app-type-caption);
   font-weight: 600;
@@ -717,12 +737,12 @@
 }
 
 .auth-legal-notice [data-slot="checkbox"] {
-  width: 1.15rem;
-  height: 1.15rem;
-  flex: 0 0 1.15rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  flex: 0 0 0.8rem;
   border-width: 1px;
   border-color: color-mix(in oklab, var(--muted-foreground) 42%, var(--border));
-  border-radius: 0.3rem;
+  border-radius: 0.25rem;
   background: color-mix(in oklab, var(--background) 64%, transparent);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
   transition:
@@ -743,8 +763,8 @@
 }
 
 .auth-legal-notice [data-slot="checkbox-indicator"] svg {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.6rem;
+  height: 0.6rem;
 }
 
 .auth-legal-copy {
@@ -760,22 +780,28 @@
   color: var(--muted-foreground);
 }
 
+/*
+ * 法务链接只靠颜色区分，不加下划线。
+ * 这一行的字号只有 0.68rem，下划线会压在「《》」和中文字脚的收笔上，
+ * 可读性反而更差；链接色与周围灰字的色差已经足够构成可点击提示。
+ */
 .auth-legal-notice a {
   color: var(--primary);
   outline: none;
-  text-decoration: underline;
-  text-decoration-color: color-mix(in oklab, var(--primary) 68%, transparent);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.3em;
-  transition:
-    color 180ms ease,
-    text-decoration-color 180ms ease;
+  text-decoration: none;
+  transition: color 180ms ease;
 }
 
-.auth-legal-notice a:hover,
+.auth-legal-notice a:hover {
+  color: color-mix(in oklab, var(--primary) 45%, var(--foreground));
+}
+
+/* 去掉下划线后必须补焦点可见性，否则键盘用户看不到焦点位置。 */
 .auth-legal-notice a:focus-visible {
-  color: var(--foreground);
-  text-decoration-color: currentColor;
+  border-radius: 2px;
+  color: color-mix(in oklab, var(--primary) 45%, var(--foreground));
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .auth-login-back {
@@ -1231,46 +1257,62 @@
 }
 
 /* 全局公告轮播槽位：登录后展示在页首，关闭状态由浏览器本地记录。 */
+/*
+ * 公告条按级别取一个强调色，背景、描边、图标、级别徽标和翻页点全部由它派生，
+ * 避免每个属性各写一份 color-mix 后逐渐对不上。
+ *
+ * 级别与色相的对应按语义固定：通知=蓝、好消息=青绿、提醒=黄、重要=红。
+ * 之前提醒用的是 --chart-4（品红），和「提醒」的直觉完全相反。
+ */
 .announcement-carousel {
+  --announcement-accent: var(--chart-2);
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px clamp(20px, 4vw, 64px);
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in oklab, var(--muted) 60%, var(--background));
+  padding: 12px clamp(20px, 4vw, 64px);
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--announcement-accent) 40%, var(--border));
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--announcement-accent) 26%, var(--background)),
+    color-mix(in oklab, var(--announcement-accent) 11%, var(--background)) 64%,
+    var(--background)
+  );
   color: var(--foreground);
   font-size: 0.85rem;
 }
 
+.announcement-carousel[data-level="info"] {
+  --announcement-accent: var(--chart-2);
+}
+
 .announcement-carousel[data-level="success"] {
-  background: color-mix(in oklab, var(--chart-2) 14%, var(--background));
+  --announcement-accent: var(--chart-1);
 }
 
 .announcement-carousel[data-level="warning"] {
-  background: color-mix(in oklab, var(--chart-4) 16%, var(--background));
+  --announcement-accent: var(--chart-3);
 }
 
 .announcement-carousel[data-level="danger"] {
-  background: color-mix(in oklab, var(--destructive) 14%, var(--background));
-}
-
-.announcement-carousel[data-empty="true"] {
-  color: var(--muted-foreground);
+  --announcement-accent: var(--chart-5);
 }
 
 .announcement-carousel-icon {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 1.15rem;
+  height: 1.15rem;
   flex-shrink: 0;
-  color: var(--muted-foreground);
+  /* 强调色直接用实测只有 4.4:1（danger 级红），与徽标文字同样提亮后才过 4.5:1。 */
+  color: color-mix(in oklab, var(--announcement-accent) 58%, var(--foreground));
 }
 
 .announcement-carousel-level {
   flex-shrink: 0;
-  border: 1px solid color-mix(in oklab, currentColor 22%, transparent);
+  border: 1px solid color-mix(in oklab, var(--announcement-accent) 52%, transparent);
   border-radius: 999px;
   padding: 1px 8px;
-  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--announcement-accent) 18%, transparent);
+  color: color-mix(in oklab, var(--announcement-accent) 58%, var(--foreground));
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -1290,7 +1332,7 @@
 }
 
 .announcement-carousel-body span {
-  color: var(--muted-foreground);
+  color: color-mix(in oklab, var(--foreground) 72%, var(--muted-foreground));
 }
 
 .announcement-carousel-link {
@@ -1298,7 +1340,7 @@
   flex-shrink: 0;
   align-items: center;
   gap: 4px;
-  color: var(--primary);
+  color: color-mix(in oklab, var(--announcement-accent) 45%, var(--foreground));
   font-weight: 600;
   text-decoration: none;
 }
@@ -1323,13 +1365,14 @@
   border-radius: 999px;
   border: 0;
   padding: 0;
-  background: color-mix(in oklab, currentColor 25%, transparent);
+  background: color-mix(in oklab, var(--announcement-accent) 45%, transparent);
   cursor: pointer;
   transition: background 160ms ease;
 }
 
 .announcement-carousel-dot[aria-current="true"] {
-  background: var(--foreground);
+  background: var(--announcement-accent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--announcement-accent) 28%, transparent);
 }
 
 @media (max-width: 720px) {
@@ -1344,10 +1387,43 @@
   }
 }
 
-/* 管理员公告配置面板。 */
-.announcement-admin-dialog {
-  max-height: min(88svh, 900px);
+/* 管理员公告配置抽屉。 */
+.announcement-admin-sheet {
+  width: min(34rem, 100vw);
+  max-width: min(34rem, 100vw);
+  gap: 0;
+}
+
+.announcement-admin-sheet [data-slot="sheet-header"] {
+  border-bottom: 1px solid var(--border);
+  padding: 18px 20px 14px;
+  padding-right: 3rem;
+}
+
+.announcement-admin-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
   overflow-y: auto;
+  padding: 18px 20px 24px;
+}
+
+.announcement-admin-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 面板体是动态 chunk，首次打开时才下载，期间必须说清在做什么。 */
+.announcement-admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
 }
 
 .announcement-admin-toolbar {
@@ -1400,6 +1476,37 @@
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* 时间选择器触发按钮与 Input 同高（h-9 由组件类名给出），否则同一行会出现台阶。 */
+.announcement-time-trigger {
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  padding-inline: 0.75rem;
+  font-weight: 400;
+}
+
+.announcement-time-popover {
+  display: flex;
+  width: auto;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.announcement-time-slots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.announcement-time-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
 }
 
 .workspace-shell {
