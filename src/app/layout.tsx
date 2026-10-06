@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next"
 import type { Metadata } from "next"
 import { TextSelectionShortcuts } from "../components/text-selection-shortcuts"
 import { Toaster } from "../components/ui/sonner"
@@ -28,6 +29,7 @@ export default function RootLayout({
           <TextSelectionShortcuts />
           {children}
           <Toaster position="top-center" richColors />
+          <Analytics />
         </TooltipProvider>
       </body>
     </html>
