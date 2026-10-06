@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test"
 import { expect, test } from "./fixtures"
+import { readHoverAffordance } from "./hover-affordance"
 
 interface MonacoModel {
   getPositionAt: (offset: number) => {
@@ -1897,21 +1898,28 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
   await expect(canvas).toBeVisible()
   const workPreview = canvas.locator('[data-section-type="workExperience"]').first()
   await expect(workPreview).toHaveCSS("cursor", "pointer")
+  await expect(workPreview).toHaveCSS("cursor", "pointer")
   // 单次 hover() 的结果会在面板过渡或重排中丢失，此时读到的是未悬停的
-  // box-shadow（none）；CI 上 headless-shell 报 (hover: none) 时更是永远读不到
-  // 阴影（已在 playwright.config 用 channel: "chromium" 修正）。这里每次重试
-  // 都重新建立 hover 再读取，断言的仍然是「hover 会产生阴影」。
+  // box-shadow（none），所以每次重试都重新建立悬停再读取。悬停样式包在
+  // @media (hover: hover) 里，CI 的 Linux headless 不满足该条件，由
+  // readHoverAffordance 摘掉媒体条件后重挂产品规则；断言的仍然是
+  // 「悬停会让这个区块拿到阴影」。
   await expect
     .poll(
       async () => {
         await workPreview.hover()
-        return await workPreview.evaluate(
-          (element) => getComputedStyle(element).boxShadow,
-        )
+        return (await readHoverAffordance(workPreview)).boxShadow
       },
       { timeout: 30_000 },
     )
     .not.toBe("none")
+  // 前置条件单独断言：悬停没生效或产品样式表里已经没有 :hover 规则时，
+  // 上面的 box-shadow 会一直停在 none，这里给出能指到具体环节的失败信息。
+  const hoverProbe = await readHoverAffordance(workPreview)
+  expect(
+    hoverProbe.clonedRules,
+    "产品样式表应存在匹配 workPreview 的 :hover 规则",
+  ).toBeGreaterThan(0)
   await expect
     .poll(() =>
       workPreview.evaluate((element) =>
