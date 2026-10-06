@@ -1898,8 +1898,9 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
   const workPreview = canvas.locator('[data-section-type="workExperience"]').first()
   await expect(workPreview).toHaveCSS("cursor", "pointer")
   // 单次 hover() 的结果会在面板过渡或重排中丢失，此时读到的是未悬停的
-  // box-shadow（none）。这里每次重试都重新建立 hover 再读取，断言的仍然是
-  // 「hover 会产生阴影」，只是不依赖那一次 hover 一直存活。
+  // box-shadow（none）；CI 上 headless-shell 报 (hover: none) 时更是永远读不到
+  // 阴影（已在 playwright.config 用 channel: "chromium" 修正）。这里每次重试
+  // 都重新建立 hover 再读取，断言的仍然是「hover 会产生阴影」。
   await expect
     .poll(
       async () => {

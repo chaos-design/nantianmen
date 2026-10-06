@@ -54,7 +54,13 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      // Playwright 1.49 起 headless 默认走 chromium-headless-shell。无显示器的
+      // Linux CI 上该构建把 media query 报成 (hover: none)，所有包在
+      // @media (hover: hover) 里的悬停样式（A4 区块阴影等）永不生效，断言在
+      // CI 稳定失败而本地全绿。channel: "chromium" 强制用完整 Chromium 的
+      // new headless，保持与桌面一致的悬停语义；`playwright install chromium`
+      // 本就会同时下载完整构建，CI 无需改动。
+      use: { ...devices["Desktop Chrome"], channel: "chromium" },
     },
   ],
   webServer: {

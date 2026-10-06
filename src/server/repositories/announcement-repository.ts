@@ -88,10 +88,15 @@ export class InMemoryAnnouncementRepository implements AnnouncementRepository {
   }
 
   private sort(records: Announcement[]): Announcement[] {
-    return records.toSorted(
-      (left, right) =>
-        left.sortOrder - right.sortOrder ||
-        right.createdAt.localeCompare(left.createdAt),
-    )
+    // createdAt 只有毫秒精度，同一毫秒内的创建用数组序兜底：后写入的更新。
+    return records
+      .map((announcement, index) => ({ announcement, index }))
+      .toSorted(
+        (left, right) =>
+          left.announcement.sortOrder - right.announcement.sortOrder ||
+          right.announcement.createdAt.localeCompare(left.announcement.createdAt) ||
+          right.index - left.index,
+      )
+      .map(({ announcement }) => announcement)
   }
 }
