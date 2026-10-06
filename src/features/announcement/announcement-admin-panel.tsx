@@ -26,7 +26,6 @@ import { Switch } from "../../components/ui/switch"
 import { Textarea } from "../../components/ui/textarea"
 import type { AnnouncementOverview } from "../../server/domain/announcement-service"
 import {
-  type Announcement,
   type AnnouncementInput,
   type AnnouncementLevel,
   announcementInputSchema,
@@ -40,6 +39,13 @@ import {
   deleteAnnouncement,
   updateAnnouncement,
 } from "./announcement-api"
+import {
+  type AnnouncementRow,
+  isRowDirty,
+  mergeRows,
+  toInput,
+  toRows,
+} from "./announcement-rows"
 import { formatAnnouncementWindow } from "./announcement-time"
 import { AnnouncementTimeField } from "./announcement-time-field"
 
@@ -48,20 +54,6 @@ const levelLabels: Record<AnnouncementLevel, string> = {
   success: "好消息",
   warning: "提醒",
   danger: "重要",
-}
-
-function toInput(announcement: Announcement): AnnouncementInput {
-  return {
-    level: announcement.level,
-    title: announcement.title,
-    body: announcement.body,
-    linkLabel: announcement.linkLabel,
-    linkHref: announcement.linkHref,
-    enabled: announcement.enabled,
-    sortOrder: announcement.sortOrder,
-    startsAt: announcement.startsAt,
-    endsAt: announcement.endsAt,
-  }
 }
 
 function describeError(error: unknown): string {
@@ -79,24 +71,7 @@ function describeError(error: unknown): string {
  * 先建空记录再补内容会在第一步就被 422 拒绝，还会留下垃圾数据。
  * `saved` 记录服务端原值，用于判断是否有改动、退出编辑时回滚。
  */
-interface AnnouncementRow {
-  clientId: string
-  id: string | null
-  draft: AnnouncementInput
-  saved: AnnouncementInput | null
-}
-
-function toRows(overview: AnnouncementOverview): AnnouncementRow[] {
-  return overview.announcements.map((announcement) => {
-    const input = toInput(announcement)
-    return {
-      clientId: announcement.id,
-      id: announcement.id,
-      draft: input,
-      saved: input,
-    }
-  })
-}
+/** 列表视图与表单视图共用同一套行模型与合并规则，见 announcement-rows.ts。 */
 
 /**
  * 表单里的一行：左标签、右控件，说明文字落在控件正下方。
@@ -368,16 +343,10 @@ export function AnnouncementAdminPanel({
   const [pendingClientId, setPendingClientId] = useState<string | null>(null)
   const newRowCount = useRef(0)
 
-  // 每次写操作都会 router.refresh()，服务端会带回新的全量列表。
-  // 不跟着 props 同步就会显示陈旧数据，也会把刚删掉的行带回来。
-  // 未落库的新草稿不能被覆盖掉，否则管理员填到一半的内容会消失。
+  // 每次写操作都会 router.refresh()，服务端随之带回新的全量列表。
+  // 合并规则见 mergeRows：服务端决定哪些行存在，本地决定每行的内容。
   useEffect(() => {
-    setRows((current) => {
-      const unsaved = current.filter((row) => row.id === null)
-      const merged = toRows(initialAnnouncements)
-      const knownIds = new Set(merged.map((row) => row.clientId))
-      return [...merged, ...unsaved.filter((row) => !knownIds.has(row.clientId))]
-    })
+    setRows((current) => mergeRows(initialAnnouncements, current))
   }, [initialAnnouncements])
 
   const persistedCount = rows.filter((row) => row.id !== null).length
@@ -496,9 +465,7 @@ export function AnnouncementAdminPanel({
         ? []
         : validation.error.issues.map((issue) => String(issue.path[0])),
     )
-    const isDirty =
-      activeRow.saved === null ||
-      JSON.stringify(activeRow.draft) !== JSON.stringify(activeRow.saved)
+    const isDirty = isRowDirty(activeRow)
     const isCreating = activeRow.id === null
 
     return (
