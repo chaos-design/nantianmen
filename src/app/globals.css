@@ -1635,17 +1635,29 @@
 }
 
 /*
- * 时段下拉的候选项有 24 个，每项 32px，自然高度 776px。
+ * 时段下拉的候选项有 24 个，每项 32px，自然高度 776px，不限高会整条铺开，
+ * 盖住日历和「今天 09:00」。这里加一道 12rem 的硬上限。
  *
- * SelectContent 自带的 `max-h-(--radix-select-content-available-height)`
- * 只挡视口不够用：弹层靠上、视口偏高时这个值有 1200px，下拉会整条铺开，
- * 盖住日历和「今天 09:00」。这里加一道硬上限，12rem 露出 6 项。
+ * `!important` 不是偷懒，是绕不开的：Radix 的 SelectItemAlignedPosition
+ * 给内容容器写死了行内样式 `max-height: 100%`（见 @radix-ui/react-select
+ * 源码 `SelectItemAlignedPosition`），而行内样式压过一切作者规则，
+ * 普通 class 无论顺序还是 @layer 都赢不了。`!important` 是作者样式里
+ * 唯一能压过行内样式的手段。
  *
- * 用 min() 而不是直接写死：视口不够时仍让 available-height 生效，
- * 两条约束取更紧的那个，不会出现下拉超出屏幕。
+ * 顺带记录两条被实测推翻的写法，避免以后重蹈：
+ *
+ * 1. shadcn 自带的 `max-h-(--radix-select-content-available-height)` 在本项目
+ *    无效：默认 `position="item-aligned"` 下 Radix 不设这个变量（实测取到空串），
+ *    无 fallback 的 var() 会让声明在 computed-value 阶段失效。
+ * 2. 改写成 `min(12rem, var(..., 100%))` 同样无效：容器高度不确定时百分比
+ *    max-height 不参与约束，computed 仍报 "100%"，渲染高度仍是 557px。
+ *
+ * 12rem 远小于任何视口高度，不存在顶出屏幕的风险，因此不需要 available-height
+ * 兜底，也就不必跟着那个无效变量写 min()。
  */
 .announcement-time-select-content {
-  max-height: min(12rem, var(--radix-select-content-available-height));
+  /* biome-ignore lint/complexity/noImportantStyles: Radix writes max-height as inline style, only !important can win */
+  max-height: 12rem !important;
 }
 
 .announcement-time-actions {

@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import { expect, test } from "./fixtures"
 
 const runAsAdmin = process.env.PLAYWRIGHT_AS_ADMIN === "1"
@@ -55,6 +55,31 @@ async function clearAllAnnouncements(page: Page) {
     remaining -= 1
   }
   await page.keyboard.press("Escape")
+}
+
+/**
+ * 量一个时段下拉的真实滚动状态。
+ *
+ * Radix 的结构是两层：外层是 `role="listbox"` 的内容容器，负责限高；
+ * 内层是 `role="presentation"` 的 Viewport（`flex: 1 1 0%`），才是真正滚动的元素。
+ * 只看外层的 scrollHeight 恒等于 clientHeight，会误判成「没有滚动」。
+ */
+async function measureDropdown(listbox: Locator) {
+  return listbox.evaluate((node) => {
+    const viewport = node.querySelector<HTMLElement>('[role="presentation"]')
+    if (!viewport) {
+      throw new Error("找不到 Radix Select 的 Viewport，DOM 结构可能变了")
+    }
+    viewport.scrollTop = 9_999
+    return {
+      listHeight: node.clientHeight,
+      scrollable: {
+        viewportClient: viewport.clientHeight,
+        viewportScroll: viewport.scrollHeight,
+        scrolledTo: viewport.scrollTop,
+      },
+    }
+  })
 }
 
 test.describe("platform announcement carousel", () => {
@@ -266,7 +291,8 @@ test.describe("platform announcement carousel", () => {
     await page.getByTestId("announcement-create").click()
     await form.getByLabel("标题").fill("会被放弃的草稿")
     await form.getByLabel("正文").fill("放弃草稿后不应该留下任何数据。")
-    await form.getByTestId("announcement-cancel").click()
+    // 取消按钮在表单上方的工具栏里，不是表单的子节点。
+    await page.getByTestId("announcement-cancel").click()
 
     // 放弃草稿等于删掉这一行，列表回到空态。
     await expect(form).toHaveCount(0)
@@ -327,28 +353,30 @@ test.describe("platform announcement carousel", () => {
     await page.getByTestId("announcement-form-starts-at-trigger").click()
 
     // 小时下拉有 24 项、每项 32px，自然高度 776px。
-    // SelectContent 自带的 available-height 只挡视口，弹层靠上时挡不住。
+    // Radix 给内容容器写死了行内 max-height: 100%，必须用 !important 压过。
     await page.getByLabel("开始时间的小时").click()
     const hourList = page.getByRole("listbox")
     await expect(hourList).toBeVisible()
-    const hourMetrics = await hourList.evaluate((node) => ({
-      maxHeight: getComputedStyle(node).maxHeight,
-      clientHeight: node.clientHeight,
-      scrollHeight: node.scrollHeight,
-    }))
-    expect(parseFloat(hourMetrics.maxHeight)).toBeLessThanOrEqual(12 * 16)
-    expect(hourMetrics.scrollHeight).toBeGreaterThan(hourMetrics.clientHeight)
+    await expect(hourList.getByRole("option")).toHaveCount(24)
+    const hourMetrics = await measureDropdown(hourList)
+    // 外层被限高：不限高时实测 557px。
+    expect(hourMetrics.listHeight).toBeLessThanOrEqual(12 * 16)
+    // 真正滚动的是 Radix 的 Viewport（role=presentation，flex: 1 1 0%），
+    // 外层自己的 scrollHeight 恒等于 clientHeight，不能用来判断能否滚动。
+    expect(hourMetrics.scrollable.viewportScroll).toBeGreaterThan(
+      hourMetrics.scrollable.viewportClient,
+    )
+    // 并且真的能滚：滚到底后 scrollTop 大于 0。
+    expect(hourMetrics.scrollable.scrolledTo).toBeGreaterThan(0)
     await page.keyboard.press("Escape")
 
     // 分钟下拉 12 项，同样超过上限，行为必须一致。
     await page.getByLabel("开始时间的分钟").click()
-    const minuteMetrics = await page.getByRole("listbox").evaluate((node) => ({
-      maxHeight: getComputedStyle(node).maxHeight,
-      clientHeight: node.clientHeight,
-      scrollHeight: node.scrollHeight,
-    }))
-    expect(parseFloat(minuteMetrics.maxHeight)).toBeLessThanOrEqual(12 * 16)
-    expect(minuteMetrics.scrollHeight).toBeGreaterThan(minuteMetrics.clientHeight)
+    const minuteMetrics = await measureDropdown(page.getByRole("listbox"))
+    expect(minuteMetrics.listHeight).toBeLessThanOrEqual(12 * 16)
+    expect(minuteMetrics.scrollable.viewportScroll).toBeGreaterThan(
+      minuteMetrics.scrollable.viewportClient,
+    )
 
     // 选一个值确认限高没有破坏交互：下拉仍然能选到 30 分。
     await page.getByRole("option", { name: "30 分" }).click()
