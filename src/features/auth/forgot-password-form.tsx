@@ -2,6 +2,7 @@
 
 import { MailIcon } from "lucide-react"
 import { type FormEvent, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "../../components/ui/button"
 import {
   Field,
@@ -40,8 +41,11 @@ export function ForgotPasswordForm({ nextPath }: { nextPath: string }) {
         throw resetError
       }
       setSent(true)
+      toast.success("如该邮箱已注册，密码重置邮件将很快送达。")
     } catch (submitError) {
-      setError(getAuthErrorMessage(submitError))
+      const message = getAuthErrorMessage(submitError)
+      setError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }

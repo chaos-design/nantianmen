@@ -12,6 +12,7 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { type FormEvent, useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "../../components/ui/button"
 import { Checkbox } from "../../components/ui/checkbox"
 import {
@@ -210,6 +211,21 @@ export function LoginForm({
     setMessage("")
   }
 
+  function showFieldError(field: AuthErrorField, message: string) {
+    setFieldError({ field, message })
+    toast.error(message)
+  }
+
+  function showGeneralError(message: string) {
+    setGeneralError(message)
+    toast.error(message)
+  }
+
+  function showMessage(message: string) {
+    setMessage(message)
+    toast.success(message)
+  }
+
   function clearFieldFeedback(field: AuthErrorField) {
     setFieldError((current) => (current?.field === field ? null : current))
     setGeneralError("")
@@ -224,7 +240,7 @@ export function LoginForm({
     if (acceptedLegalTerms) {
       return true
     }
-    setGeneralError("请先阅读并同意《服务条款》与《隐私政策》")
+    showGeneralError("请先阅读并同意《服务条款》与《隐私政策》")
     return false
   }
 
@@ -251,36 +267,27 @@ export function LoginForm({
     const password = String(formData.get("password") ?? "")
 
     if (!isValidEmail(email)) {
-      setFieldError({ field: "password-email", message: "请输入有效邮箱" })
+      showFieldError("password-email", "请输入有效邮箱")
       setIsSubmitting(false)
       return
     }
     if (passwordMode === "register" && !isAllowedRegistrationEmail(email)) {
-      setFieldError({
-        field: "password-email",
-        message: "请使用 QQ、网易、Gmail、Outlook 等常用邮箱注册",
-      })
+      showFieldError("password-email", "请使用 QQ、网易、Gmail、Outlook 等常用邮箱注册")
       setIsSubmitting(false)
       return
     }
     if (!password) {
-      setFieldError({ field: "password", message: "请输入密码" })
+      showFieldError("password", "请输入密码")
       setIsSubmitting(false)
       return
     }
     if (passwordMode === "register" && password.length < minimumPasswordLength) {
-      setFieldError({
-        field: "password",
-        message: `密码至少需要 ${minimumPasswordLength} 位`,
-      })
+      showFieldError("password", `密码至少需要 ${minimumPasswordLength} 位`)
       setIsSubmitting(false)
       return
     }
     if (passwordMode === "register" && password !== passwordConfirmation) {
-      setFieldError({
-        field: "password-confirmation",
-        message: "两次输入的密码不一致",
-      })
+      showFieldError("password-confirmation", "两次输入的密码不一致")
       setIsSubmitting(false)
       return
     }
@@ -298,7 +305,7 @@ export function LoginForm({
         if (data.session) {
           await supabase.auth.signOut()
         }
-        setMessage("确认链接已发送，请打开邮箱中的链接完成登录。")
+        showMessage("确认链接已发送，请打开邮箱中的链接完成登录。")
         return
       }
 
@@ -309,17 +316,17 @@ export function LoginForm({
       if (signInError) {
         throw signInError
       }
+      toast.success("登录成功")
       router.replace(nextPath)
       router.refresh()
     } catch (submitError) {
       const errorMessage = getAuthErrorMessage(submitError)
-      setFieldError({
-        field:
-          passwordMode === "register" && /邮箱|注册/.test(errorMessage)
-            ? "password-email"
-            : "password",
-        message: errorMessage,
-      })
+      showFieldError(
+        passwordMode === "register" && /邮箱|注册/.test(errorMessage)
+          ? "password-email"
+          : "password",
+        errorMessage,
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -332,10 +339,7 @@ export function LoginForm({
       return
     }
     if (!isValidEmail(email)) {
-      setFieldError({
-        field: "otp-email",
-        message: "请输入有效邮箱后再获取验证码",
-      })
+      showFieldError("otp-email", "请输入有效邮箱后再获取验证码")
       return
     }
 
@@ -354,11 +358,9 @@ export function LoginForm({
       setOtpEmail(email)
       setOtpSent(true)
       setCooldown(otpResendCooldownSeconds)
+      toast.success("验证码已发送，请查收邮箱")
     } catch (submitError) {
-      setFieldError({
-        field: "otp-email",
-        message: getAuthErrorMessage(submitError),
-      })
+      showFieldError("otp-email", getAuthErrorMessage(submitError))
     } finally {
       setIsSendingOtp(false)
     }
@@ -373,11 +375,11 @@ export function LoginForm({
       return
     }
     if (!isValidEmail(email)) {
-      setFieldError({ field: "otp-email", message: "请输入有效邮箱" })
+      showFieldError("otp-email", "请输入有效邮箱")
       return
     }
     if (!/^\d+$/.test(token)) {
-      setFieldError({ field: "otp-token", message: "请输入数字验证码" })
+      showFieldError("otp-token", "请输入数字验证码")
       return
     }
 
@@ -391,13 +393,11 @@ export function LoginForm({
       if (verifyError) {
         throw verifyError
       }
+      toast.success("登录成功")
       router.replace(nextPath)
       router.refresh()
     } catch (submitError) {
-      setFieldError({
-        field: "otp-token",
-        message: getAuthErrorMessage(submitError),
-      })
+      showFieldError("otp-token", getAuthErrorMessage(submitError))
     } finally {
       setIsSubmitting(false)
     }
@@ -412,10 +412,11 @@ export function LoginForm({
       if (!response.ok || !payload) {
         throw new Error(payload?.error?.message ?? "Preview 模式暂不可用，请稍后重试")
       }
+      toast.success("已进入 Preview 模式")
       router.replace(payload.data?.workspaceUrl ?? "/workspace")
       router.refresh()
     } catch (previewError) {
-      setGeneralError(
+      showGeneralError(
         previewError instanceof Error
           ? previewError.message
           : "Preview 模式暂不可用，请稍后重试",
