@@ -229,7 +229,9 @@ describe("A4 preview pagination", () => {
     expect(metrics.firstPageCapacity).toBeLessThan(metrics.continuationPageCapacity)
     expect(metrics.firstPageContentScale).toBe(metrics.continuationPageContentScale)
     expect(metrics.continuationPageCapacity).toBe(
-      A4_PAGE_HEIGHT - document.style.pageMargin * 3,
+      A4_PAGE_HEIGHT -
+        document.style.pageMargin * 3 -
+        Math.ceil(document.style.baseFontSize * document.style.lineHeight),
     )
     expect(metrics.firstPageCapacity).toBeLessThanOrEqual(
       A4_PAGE_HEIGHT - document.style.pageMargin * 3 - 28,

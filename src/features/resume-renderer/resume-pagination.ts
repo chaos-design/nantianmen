@@ -83,7 +83,12 @@ function estimateProfileHeight(
 
 export function getPaginationMetrics(document: ResumeDocument): PaginationMetrics {
   const scheme = getTemplateScheme(document.template.id)
-  const bottomEstimationReserve = document.style.pageMargin
+  // 分页估算基于字符宽度模型，不依赖真实字体度量；CI Linux runner 上的英文字体
+  // 是 DejaVu（无 SFMono/Avenir/Consolas/PingFang），实测会让同一份文字比估算
+  // 多占一行。底部预留至少「正文行高」，让最坏情况下的行出现不会顶到页底留白。
+  const estimatedLineHeight = document.style.baseFontSize * document.style.lineHeight
+  const bottomEstimationReserve =
+    document.style.pageMargin + Math.ceil(estimatedLineHeight)
   const pageContentHeight =
     A4_PAGE_HEIGHT - document.style.pageMargin * 2 - bottomEstimationReserve
   const singleColumnWidth = A4_PAGE_WIDTH - document.style.pageMargin * 2
