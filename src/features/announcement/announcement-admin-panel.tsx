@@ -51,7 +51,7 @@ import { AnnouncementTimeField } from "./announcement-time-field"
 
 const levelLabels: Record<AnnouncementLevel, string> = {
   info: "通知",
-  success: "好消息",
+  success: "消息",
   warning: "提醒",
   danger: "重要",
 }

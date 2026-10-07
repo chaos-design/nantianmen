@@ -34,7 +34,7 @@ const levelIcons: Record<AnnouncementLevel, typeof InfoIcon> = {
 
 const levelLabels: Record<AnnouncementLevel, string> = {
   info: "通知",
-  success: "好消息",
+  success: "消息",
   warning: "提醒",
   danger: "重要",
 }
