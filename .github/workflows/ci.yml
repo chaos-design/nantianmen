@@ -61,6 +61,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-publishable-key
           ADMIN_USER_ID: 00000000-0000-4000-8000-000000000001
 
+      # 体积是这里唯一能在 CI 上确定性判定的前端性能指标：Lighthouse 分数在
+      # 共享 runner 上噪声太大，INP 需要真实用户 field data（本仓库尚无 RUM
+      # 采集）。门禁挂在 build 之后，读的就是上一步的构建产物。
+      - name: Enforce bundle budget
+        run: pnpm check:budget
+
   e2e:
     name: e2e
     runs-on: ubuntu-latest
