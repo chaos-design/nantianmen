@@ -57,7 +57,7 @@ export default async function PublicResumeWebPage({
           <span>Résumé Lab</span>
         </Link>
         <div>
-          <PublicResumeActions mode="web" />
+          <PublicResumeActions mode="web" publicSlug={result.resume.publicSlug} />
         </div>
       </header>
       <ResumeWebPage document={document} templateId={templateId} />

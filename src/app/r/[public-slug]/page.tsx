@@ -52,7 +52,7 @@ export default async function PublicResumePage({ params }: PublicResumePageProps
           <span>Résumé Lab</span>
         </Link>
         <div>
-          <PublicResumeActions mode="a4" />
+          <PublicResumeActions mode="a4" publicSlug={result.resume.publicSlug} />
         </div>
       </header>
       <div className="public-resume-stage">
