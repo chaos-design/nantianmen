@@ -2863,6 +2863,31 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
   await expect(page.getByText("只读发布快照")).toHaveCount(0)
   await expect(page.getByRole("link", { name: "互动版" })).toHaveCount(0)
 
+  // 分享页底部来源署名与打印旁的 GitHub 入口都属于对外可见的品牌面。
+  const a4Attribution = page.locator(".public-resume-attribution")
+  await expect(a4Attribution).toHaveAttribute("data-tone", "light")
+  await expect(a4Attribution).toContainText("本页面由 Résumé Lab 生成")
+  await expect(a4Attribution).toContainText("结构化 JSON 为唯一事实来源")
+  await expect(a4Attribution).toContainText("Apache-2.0")
+  const a4RepoLink = a4Attribution.getByRole("link", { name: /GitHub/ })
+  await expect(a4RepoLink).toHaveAttribute(
+    "href",
+    "https://github.com/chaos-design/nantianmen",
+  )
+  await expect(a4RepoLink).toHaveAttribute("target", "_blank")
+  const toolbarRepoLink = page
+    .locator(".public-resume-toolbar")
+    .getByRole("link", { name: /GitHub/ })
+  await expect(toolbarRepoLink).toHaveAttribute(
+    "href",
+    "https://github.com/chaos-design/nantianmen",
+  )
+  // 打印与导出 PDF 只输出简历本身，来源署名不进 PDF。
+  await page.emulateMedia({ media: "print" })
+  await expect(a4Attribution).toBeHidden()
+  await expect(toolbarRepoLink).toBeHidden()
+  await page.emulateMedia({ media: "screen" })
+
   await page.goto(`${shareUrl}/web`)
   await expect(page).toHaveURL(`${shareUrl}/web`)
   await expect(page.getByRole("heading", { name: "E2E JSON 候选人" })).toBeVisible()
@@ -2876,6 +2901,15 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
     "data-web-template",
     "terminal-signal",
   )
+  // Web 分享页复用同一个来源署名，但走深色底配色，且不重复打印入口。
+  const webAttribution = page.locator(".public-resume-attribution")
+  await expect(webAttribution).toHaveAttribute("data-tone", "dark")
+  await expect(webAttribution).toContainText("本页面由 Résumé Lab 生成")
+  await expect(webAttribution.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
+    "href",
+    "https://github.com/chaos-design/nantianmen",
+  )
+  await expect(page.getByRole("button", { name: "打印" })).toHaveCount(0)
   const firstWebModule = page.locator(".web-resume-module").first()
   await expect(firstWebModule).toBeAttached()
   await expect(page.locator(".web-resume-progress")).toBeAttached()

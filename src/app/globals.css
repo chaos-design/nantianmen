@@ -7193,6 +7193,89 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   margin: 1.5rem auto;
 }
 
+/* 分享页底部来源署名。A4 页跟随浅色主题，Web 页用 tone="dark"
+   贴合深色底；两者在打印时都由 @media print 隐藏。 */
+.public-resume-attribution {
+  display: flex;
+  width: min(980px, calc(100% - 2rem));
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  margin-inline: auto;
+  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  padding: 1.15rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.public-resume-attribution p {
+  margin: 0;
+}
+
+.public-resume-attribution-note {
+  max-width: 46ch;
+}
+
+.public-resume-attribution-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.1rem;
+}
+
+.public-resume-attribution-license {
+  white-space: nowrap;
+}
+
+.public-resume-attribution-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--foreground);
+  transition: color 180ms ease;
+}
+
+.public-resume-attribution-repo svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--primary);
+}
+
+.public-resume-attribution-repo:hover {
+  color: var(--primary);
+}
+
+.public-resume-attribution-repo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+.public-resume-attribution[data-tone="dark"] {
+  width: 100%;
+  border-top-color: rgb(255 255 255 / 10%);
+  padding: 0.85rem 1rem;
+  color: rgb(255 255 255 / 62%);
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo {
+  color: rgb(255 255 255 / 88%);
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo:hover {
+  color: white;
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo svg {
+  color: oklch(0.72 0.15 190);
+}
+
+.public-resume-attribution[data-tone="dark"]
+  .public-resume-attribution-repo:focus-visible {
+  outline-color: rgb(255 255 255 / 55%);
+}
+
 .public-a4-pages {
   display: flex;
   flex-direction: column;
@@ -12774,7 +12857,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  grid-template-rows: auto minmax(0, 1fr);
+  /* 底部来源署名占一行，中间滚动区继续用 minmax(0, 1fr) 吃掉剩余高度。 */
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background: oklch(0.075 0.016 248);
 }
 
@@ -14237,6 +14321,7 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   .landing-workflow-track article,
   .landing-template-sheet,
   .landing-template-glow,
+  .public-resume-attribution-repo,
   .a4-page,
   .a4-page-wrap,
   .resume-profile,
@@ -14317,7 +14402,9 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   .preview-zoom-controls,
   .resume-preview-toolbar,
   .public-resume-toolbar,
-  .public-web-resume-toolbar {
+  .public-web-resume-toolbar,
+  /* 来源署名只服务网页浏览和导出前的确认，不进入 PDF。 */
+    .public-resume-attribution {
     display: none;
   }
 

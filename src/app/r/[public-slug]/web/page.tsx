@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { PublicResumeActions } from "../../../../features/resume-renderer/public-resume-actions"
+import { PublicResumeAttribution } from "../../../../features/resume-renderer/public-resume-attribution"
 import { ResumeWebPage } from "../../../../features/resume-renderer/resume-web-page"
 import { ResumeService } from "../../../../server/domain/resume-service"
 import { getResumeRepository } from "../../../../server/repositories/repository-factory"
@@ -60,6 +61,7 @@ export default async function PublicResumeWebPage({
         </div>
       </header>
       <ResumeWebPage document={document} templateId={templateId} />
+      <PublicResumeAttribution tone="dark" />
     </main>
   )
 }
