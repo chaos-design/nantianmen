@@ -2870,7 +2870,32 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
   )
   expect(unreferencedResponse.status()).toBe(404)
   await expect(page.getByText("只读发布快照")).toHaveCount(0)
-  await expect(page.getByRole("link", { name: "互动版" })).toHaveCount(0)
+  // 打印旁新增「互动版」入口，路由到同一发布快照的 /r/[slug]/web。
+  const interactiveLink = page.getByRole("link", { name: "互动版" })
+  await expect(interactiveLink).toHaveCount(1)
+  await expect(interactiveLink).toHaveAttribute(
+    "href",
+    `${new URL(shareUrl).pathname}/web`,
+  )
+
+  // 分享页底部来源署名属于对外可见的品牌面。
+  const a4Attribution = page.locator(".public-resume-attribution")
+  await expect(a4Attribution).toHaveAttribute("data-tone", "light")
+  await expect(a4Attribution).toHaveCSS("position", "fixed")
+  await expect(a4Attribution).toBeVisible()
+  await expect(a4Attribution).toContainText("本页面由 Résumé Lab 生成")
+  await expect(a4Attribution).not.toContainText("结构化 JSON")
+  await expect(a4Attribution).toContainText("Apache-2.0")
+  const a4RepoLink = a4Attribution.getByRole("link", { name: /GitHub/ })
+  await expect(a4RepoLink).toHaveAttribute(
+    "href",
+    "https://github.com/chaos-design/nantianmen",
+  )
+  await expect(a4RepoLink).toHaveAttribute("target", "_blank")
+  // 打印与导出 PDF 只输出简历本身，来源署名不进 PDF。
+  await page.emulateMedia({ media: "print" })
+  await expect(a4Attribution).toBeHidden()
+  await page.emulateMedia({ media: "screen" })
 
   await page.goto(`${shareUrl}/web`)
   await expect(page).toHaveURL(`${shareUrl}/web`)
@@ -2885,6 +2910,17 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
     "data-web-template",
     "terminal-signal",
   )
+  // Web 分享页复用同一个来源署名，但走深色底配色，且不重复打印入口。
+  const webAttribution = page.locator(".public-resume-attribution")
+  await expect(webAttribution).toHaveAttribute("data-tone", "dark")
+  // Web 版由网格行常驻底部，不用 fixed 定位即可做到吸底。
+  await expect(webAttribution).not.toHaveCSS("position", "fixed")
+  await expect(webAttribution).toContainText("本页面由 Résumé Lab 生成")
+  await expect(webAttribution.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
+    "href",
+    "https://github.com/chaos-design/nantianmen",
+  )
+  await expect(page.getByRole("button", { name: "打印" })).toHaveCount(0)
   const firstWebModule = page.locator(".web-resume-module").first()
   await expect(firstWebModule).toBeAttached()
   await expect(page.locator(".web-resume-progress")).toBeAttached()

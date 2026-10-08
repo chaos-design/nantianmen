@@ -7318,7 +7318,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 
 .public-resume-shell {
   min-height: 100vh;
-  padding-bottom: 3rem;
+  /* 底部留出空间给悬浮的来源署名栏，避免压住最后一页内容。 */
+  padding-bottom: 5.5rem;
   background:
     radial-gradient(circle at 50% 0%, oklch(0.3 0.06 190 / 0.25), transparent 40rem),
     var(--background);
@@ -7351,6 +7352,99 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   width: 794px;
   min-height: 1123px;
   margin: 1.5rem auto;
+}
+
+/* 分享页底部来源署名。A4 页跟随浅色主题，Web 页用 tone="dark"
+   贴合深色底；两者在打印时都由 @media print 隐藏。 */
+.public-resume-attribution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+/* A4 分享页：来源署名固定吸在视口底部，悬浮于内容之上。
+   背景与顶部的公共工具栏同款半透磨砂，保证被盖住的内容仍可辨认；
+   内边距把正文对齐收进 min(980px, 100% - 2rem) 的页面栏内。 */
+.public-resume-shell .public-resume-attribution {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  padding: 0.65rem max(1rem, calc((100% - 980px) / 2));
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.public-resume-attribution p {
+  margin: 0;
+}
+
+.public-resume-attribution-note {
+  max-width: 46ch;
+}
+
+.public-resume-attribution-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.1rem;
+}
+
+.public-resume-attribution-license {
+  white-space: nowrap;
+}
+
+.public-resume-attribution-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--foreground);
+  transition: color 180ms ease;
+}
+
+.public-resume-attribution-repo svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--primary);
+}
+
+.public-resume-attribution-repo:hover {
+  color: var(--primary);
+}
+
+.public-resume-attribution-repo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+.public-resume-attribution[data-tone="dark"] {
+  padding: 0.85rem 1rem;
+  background: transparent;
+  color: rgb(255 255 255 / 62%);
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo {
+  color: rgb(255 255 255 / 88%);
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo:hover {
+  color: white;
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo svg {
+  color: oklch(0.72 0.15 190);
+}
+
+.public-resume-attribution[data-tone="dark"]
+  .public-resume-attribution-repo:focus-visible {
+  outline-color: rgb(255 255 255 / 55%);
 }
 
 .public-a4-pages {
@@ -12934,7 +13028,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
-  grid-template-rows: auto minmax(0, 1fr);
+  /* 底部来源署名占一行，中间滚动区继续用 minmax(0, 1fr) 吃掉剩余高度。 */
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background: oklch(0.075 0.016 248);
 }
 
@@ -14397,6 +14492,7 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   .landing-workflow-track article,
   .landing-template-sheet,
   .landing-template-glow,
+  .public-resume-attribution-repo,
   .a4-page,
   .a4-page-wrap,
   .resume-profile,
@@ -14477,7 +14573,9 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   .preview-zoom-controls,
   .resume-preview-toolbar,
   .public-resume-toolbar,
-  .public-web-resume-toolbar {
+  .public-web-resume-toolbar,
+  /* 来源署名只服务网页浏览和导出前的确认，不进入 PDF。 */
+    .public-resume-attribution {
     display: none;
   }
 
