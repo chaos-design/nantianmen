@@ -7159,6 +7159,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 .public-resume-shell {
   min-height: 100vh;
   padding-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
   background:
     radial-gradient(circle at 50% 0%, oklch(0.3 0.06 190 / 0.25), transparent 40rem),
     var(--background);
@@ -7203,6 +7205,9 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   justify-content: space-between;
   gap: 0.4rem 1.5rem;
   margin-inline: auto;
+  /* 简历页数少于视口高度时，来源署名吸到视口底部；
+     内容超出时 margin-top:auto 退化为 0，跟在简历后面。 */
+  margin-top: auto;
   border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
   padding: 1.15rem 0 0;
   color: var(--muted-foreground);
@@ -14437,6 +14442,10 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
     margin: 0;
     padding: 0;
     background: white;
+  }
+
+  .public-resume-shell {
+    display: block;
   }
 
   .resume-document {

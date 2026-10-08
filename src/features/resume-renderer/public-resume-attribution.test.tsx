@@ -19,11 +19,11 @@ function renderAttribution(tone?: "light" | "dark") {
 }
 
 describe("public resume attribution", () => {
-  it("states the platform attribution and the structured JSON source of truth", () => {
+  it("states only the platform attribution without extra slogans", () => {
     const markup = renderAttribution()
 
     expect(markup).toContain("本页面由 Résumé Lab 生成")
-    expect(markup).toContain("结构化 JSON 为唯一事实来源")
+    expect(markup).not.toContain("结构化 JSON")
     expect(markup).toContain('class="public-resume-attribution"')
   })
 

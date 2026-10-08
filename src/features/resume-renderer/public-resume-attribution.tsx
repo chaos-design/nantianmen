@@ -16,9 +16,7 @@ export function PublicResumeAttribution({
 }: PublicResumeAttributionProps) {
   return (
     <footer className="public-resume-attribution" data-tone={tone}>
-      <p className="public-resume-attribution-note">
-        本页面由 Résumé Lab 生成 · 内容以结构化 JSON 为唯一事实来源
-      </p>
+      <p className="public-resume-attribution-note">本页面由 Résumé Lab 生成</p>
       <div className="public-resume-attribution-meta">
         <p className="public-resume-attribution-license">
           {formatLandingFooterCopyright(new Date().getFullYear())}
