@@ -2866,6 +2866,8 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
   // 分享页底部来源署名属于对外可见的品牌面。
   const a4Attribution = page.locator(".public-resume-attribution")
   await expect(a4Attribution).toHaveAttribute("data-tone", "light")
+  await expect(a4Attribution).toHaveCSS("position", "fixed")
+  await expect(a4Attribution).toBeVisible()
   await expect(a4Attribution).toContainText("本页面由 Résumé Lab 生成")
   await expect(a4Attribution).not.toContainText("结构化 JSON")
   await expect(a4Attribution).toContainText("Apache-2.0")
@@ -2896,6 +2898,8 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
   // Web 分享页复用同一个来源署名，但走深色底配色，且不重复打印入口。
   const webAttribution = page.locator(".public-resume-attribution")
   await expect(webAttribution).toHaveAttribute("data-tone", "dark")
+  // Web 版由网格行常驻底部，不用 fixed 定位即可做到吸底。
+  await expect(webAttribution).not.toHaveCSS("position", "fixed")
   await expect(webAttribution).toContainText("本页面由 Résumé Lab 生成")
   await expect(webAttribution.getByRole("link", { name: /GitHub/ })).toHaveAttribute(
     "href",

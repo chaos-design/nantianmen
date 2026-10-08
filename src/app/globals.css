@@ -7158,9 +7158,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 
 .public-resume-shell {
   min-height: 100vh;
-  padding-bottom: 3rem;
-  display: flex;
-  flex-direction: column;
+  /* 底部留出空间给悬浮的来源署名栏，避免压住最后一页内容。 */
+  padding-bottom: 5.5rem;
   background:
     radial-gradient(circle at 50% 0%, oklch(0.3 0.06 190 / 0.25), transparent 40rem),
     var(--background);
@@ -7199,20 +7198,28 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
    贴合深色底；两者在打印时都由 @media print 隐藏。 */
 .public-resume-attribution {
   display: flex;
-  width: min(980px, calc(100% - 2rem));
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.4rem 1.5rem;
-  margin-inline: auto;
-  /* 简历页数少于视口高度时，来源署名吸到视口底部；
-     内容超出时 margin-top:auto 退化为 0，跟在简历后面。 */
-  margin-top: auto;
-  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  padding: 1.15rem 0 0;
+  margin: 0;
   color: var(--muted-foreground);
   font-size: 0.72rem;
   line-height: 1.6;
+}
+
+/* A4 分享页：来源署名固定吸在视口底部，悬浮于内容之上。
+   背景与顶部的公共工具栏同款半透磨砂，保证被盖住的内容仍可辨认；
+   内边距把正文对齐收进 min(980px, 100% - 2rem) 的页面栏内。 */
+.public-resume-shell .public-resume-attribution {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  padding: 0.65rem max(1rem, calc((100% - 980px) / 2));
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  backdrop-filter: blur(18px);
 }
 
 .public-resume-attribution p {
@@ -7258,9 +7265,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 }
 
 .public-resume-attribution[data-tone="dark"] {
-  width: 100%;
-  border-top-color: rgb(255 255 255 / 10%);
   padding: 0.85rem 1rem;
+  background: transparent;
   color: rgb(255 255 255 / 62%);
 }
 
@@ -14442,10 +14448,6 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
     margin: 0;
     padding: 0;
     background: white;
-  }
-
-  .public-resume-shell {
-    display: block;
   }
 
   .resume-document {
