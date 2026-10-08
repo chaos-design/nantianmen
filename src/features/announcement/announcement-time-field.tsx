@@ -4,7 +4,7 @@ import { CalendarIcon, ClockIcon } from "lucide-react"
 import { useState } from "react"
 import { Button } from "../../components/ui/button"
 import { Calendar } from "../../components/ui/calendar"
-import { Field, FieldLabel } from "../../components/ui/field"
+import { FieldLabel } from "../../components/ui/field"
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover"
 import {
   Select,
@@ -33,6 +33,7 @@ interface AnnouncementTimeFieldProps {
   id: string
   label: string
   value: string | null
+  invalid?: boolean
   onChange: (value: string | null) => void
 }
 
@@ -52,6 +53,7 @@ export function AnnouncementTimeField({
   id,
   label,
   value,
+  invalid,
   onChange,
 }: AnnouncementTimeFieldProps) {
   const [open, setOpen] = useState(false)
@@ -74,7 +76,12 @@ export function AnnouncementTimeField({
   }
 
   return (
-    <Field>
+    // biome-ignore lint/a11y/useSemanticElements: 同 AnnouncementFormRow，fieldset 盒子与 subgrid 不兼容。
+    <div
+      className="announcement-admin-row"
+      role="group"
+      data-invalid={invalid ? "true" : undefined}
+    >
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -82,7 +89,7 @@ export function AnnouncementTimeField({
             id={id}
             type="button"
             variant="outline"
-            className="announcement-time-trigger h-9"
+            className="announcement-time-trigger"
             aria-haspopup="dialog"
             data-testid={`${id}-trigger`}
           >
@@ -93,16 +100,27 @@ export function AnnouncementTimeField({
           </Button>
         </PopoverTrigger>
         <PopoverContent align="start" className="announcement-time-popover">
-          <Calendar
-            mode="single"
-            selected={parts?.date}
-            onSelect={(date) => {
-              if (date) {
-                commit({ date })
-              }
-            }}
-            autoFocus
-          />
+          {/*
+           * 日历展开后有 445px，叠上时段选择会顶满整块抽屉。
+           * 限高并内部滚动。
+           *
+           * `day: aspect-auto` 是唯一真正生效的收紧手段：日格默认是
+           * `aspect-square`，高度由列宽决定，只改日按钮尺寸完全不省高度。
+           * 6 周 × (28-35)px 差值实测 41px，配合限高滚动够用。
+           */}
+          <div className="announcement-time-calendar">
+            <Calendar
+              mode="single"
+              selected={parts?.date}
+              onSelect={(date) => {
+                if (date) {
+                  commit({ date })
+                }
+              }}
+              classNames={{ day: "aspect-auto", day_button: "size-7" }}
+              autoFocus
+            />
+          </div>
           <div className="announcement-time-slots">
             <Select
               value={String(hour)}
@@ -116,7 +134,7 @@ export function AnnouncementTimeField({
                  */}
                 <SelectValue>{`${padTime(hour)} 时`}</SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="announcement-time-select-content">
                 {hourOptions.map((option) => (
                   <SelectItem key={option} value={String(option)}>
                     {`${padTime(option)} 时`}
@@ -131,7 +149,7 @@ export function AnnouncementTimeField({
               <SelectTrigger aria-label={`${label}的分钟`} className="flex-1">
                 <SelectValue>{`${padTime(minute)} 分`}</SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="announcement-time-select-content">
                 {announcementMinuteOptions.map((option) => (
                   <SelectItem key={option} value={String(option)}>
                     {`${padTime(option)} 分`}
@@ -162,6 +180,6 @@ export function AnnouncementTimeField({
           </div>
         </PopoverContent>
       </Popover>
-    </Field>
+    </div>
   )
 }

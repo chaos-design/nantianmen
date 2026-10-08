@@ -54,6 +54,10 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
+      // 不在这里做任何 hover 媒体特性的兜底。实测过 `channel: "chromium"`
+      // （完整 Chromium 的 new headless）与 `--blink-settings` 两种改法：
+      // 前者对 CI 的失败没有任何影响，后者只在首个文档生效、导航之后就被
+      // 真实值覆盖。悬停样式断言在测试内部补偿，见 tests/e2e/hover-affordance.ts。
       use: { ...devices["Desktop Chrome"] },
     },
   ],

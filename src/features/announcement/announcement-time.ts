@@ -81,6 +81,30 @@ export function formatAnnouncementDateTime(iso: string | null): string {
 }
 
 /**
+ * 列表里展示的生效时间窗口。
+ *
+ * 两端都为空表示不设边界，文案必须写出来而不是留白：
+ * 管理员需要区分「长期有效」和「还没配置过」，留白会读成后者。
+ */
+export function formatAnnouncementWindow(
+  startsAt: string | null,
+  endsAt: string | null,
+): string {
+  const start = formatAnnouncementDateTime(startsAt)
+  const end = formatAnnouncementDateTime(endsAt)
+  if (start && end) {
+    return `${start} 至 ${end}`
+  }
+  if (start) {
+    return `${start} 起`
+  }
+  if (end) {
+    return `至 ${end}`
+  }
+  return "长期有效"
+}
+
+/**
  * 未设置时间时，管理员第一次选日期应该落在哪个时间点。
  * 用当天的 09:00 而不是「此刻」，避免深夜配置时默认落到不可预期的时段。
  */

@@ -3,6 +3,7 @@
 import { ShieldCheckIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { type FormEvent, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "../../components/ui/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "../../components/ui/field"
 import { Input } from "../../components/ui/input"
@@ -25,12 +26,16 @@ export function ResetPasswordForm({ nextPath }: { nextPath: string }) {
     const password = String(formData.get("password") ?? "")
     const confirmation = String(formData.get("confirmation") ?? "")
     if (password.length < minimumPasswordLength) {
-      setError(`密码至少需要 ${minimumPasswordLength} 位`)
+      const message = `密码至少需要 ${minimumPasswordLength} 位`
+      setError(message)
+      toast.error(message)
       setIsSubmitting(false)
       return
     }
     if (password !== confirmation) {
-      setError("两次输入的密码不一致")
+      const message = "两次输入的密码不一致"
+      setError(message)
+      toast.error(message)
       setIsSubmitting(false)
       return
     }
@@ -40,10 +45,13 @@ export function ResetPasswordForm({ nextPath }: { nextPath: string }) {
       if (updateError) {
         throw updateError
       }
+      toast.success("密码已更新")
       router.replace(nextPath)
       router.refresh()
     } catch (submitError) {
-      setError(getAuthErrorMessage(submitError))
+      const message = getAuthErrorMessage(submitError)
+      setError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }

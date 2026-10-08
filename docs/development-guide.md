@@ -291,6 +291,7 @@ pnpm dev
 | 测试 | `pnpm test:coverage` | 运行测试并检查覆盖率门禁 |
 | 测试 | `pnpm test:e2e` | 运行 Playwright Chromium E2E |
 | 质量 | `pnpm check` | 依次执行 lint、typecheck 和 Vitest |
+| 质量 | `pnpm check:budget` | 按路由检查首屏 JS 体积预算，需要先 `pnpm build` |
 | 数据 | `pnpm reset:preview-data` | 重置显式 Preview 账号数据，禁止在生产执行 |
 
 ## 6. 分支管理规范
@@ -367,6 +368,7 @@ Pull Request 描述至少包含：
 ```bash
 pnpm check
 pnpm build
+pnpm check:budget
 pnpm test:e2e
 ```
 
@@ -630,8 +632,36 @@ pnpm check
 
 ```bash
 pnpm build
+pnpm check:budget
 pnpm test:e2e
 ```
+
+### 11.1 前端体积门禁
+
+`pnpm check:budget` 读取 `.next/app-build-manifest.json`，按路由统计「根布局 +
+该路由页面」chunk 并集、逐个 gzip 后的总量，超过预算表里的上限就以非零码退出。
+CI 的 quality job 在 `pnpm build` 之后执行它。
+
+选体积而不是 Lighthouse 分数做门禁，有两个原因：
+
+- Lighthouse 的 performance 分数在 CI 共享 runner 上噪声极大，同一份代码上下
+  浮动几十点是常态，做成门禁只会得到需要人肉排查的假红灯。
+- INP 是交互指标，lab 环境里的值是模拟值，只有真实用户 field data 的 p75 才有
+  意义；本仓库目前没有 RUM 采集，INP 无法在 CI 里判定。
+
+口径比 `pnpm build` 摘要里的 First Load JS 略严（Next 会把部分布局 chunk 记到各
+路由而不是「shared by all」）。两者不必相等，但同一口径跨时间可比。
+
+全局样式表（`globals.css` 编译产物，当前 gzip 约 57 kB）被所有路由共享，是目前
+最大的单个资源，但拆分它涉及大量选择器顺序与模板回归，不适合放进体积门禁。脚本
+会把它的大小打印出来作为参考，暂不设上限。
+
+预算写在 `scripts/check-bundle-budget.mjs` 的 `budgets` 表里，取整到 5 kB。确认
+是有意增长后再显式上调，不要为了让流水线变绿而无脑抬高。
+
+一个已知的体积陷阱：`radix-ui` 的根入口是 re-export 全部原语的 barrel，从
+`"radix-ui"` 导入单个原语会把 Dialog、Select 等无关原语一起拖进路由 chunk。
+必须用子路径（`import * as SelectPrimitive from "radix-ui/select"`）。
 
 ## 12. 安全基线
 

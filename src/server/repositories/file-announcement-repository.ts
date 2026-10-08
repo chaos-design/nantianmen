@@ -72,13 +72,16 @@ export class FileAnnouncementRepository implements AnnouncementRepository {
 
   async listAnnouncements(): Promise<Announcement[]> {
     const database = await this.readDatabase()
+    // createdAt 只有毫秒精度，同一毫秒内的创建用数组序兜底：后写入的更新。
     return database.announcements
+      .map((announcement, index) => ({ announcement, index }))
       .toSorted(
         (left, right) =>
-          left.sortOrder - right.sortOrder ||
-          right.createdAt.localeCompare(left.createdAt),
+          left.announcement.sortOrder - right.announcement.sortOrder ||
+          right.announcement.createdAt.localeCompare(left.announcement.createdAt) ||
+          right.index - left.index,
       )
-      .map((announcement) => structuredClone(announcement))
+      .map(({ announcement }) => structuredClone(announcement))
   }
 
   async createAnnouncement(input: AnnouncementInput): Promise<Announcement> {

@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 import { expect, test } from "./fixtures"
 
 const runAsAdmin = process.env.PLAYWRIGHT_AS_ADMIN === "1"
@@ -55,6 +55,31 @@ async function clearAllAnnouncements(page: Page) {
     remaining -= 1
   }
   await page.keyboard.press("Escape")
+}
+
+/**
+ * 量一个时段下拉的真实滚动状态。
+ *
+ * Radix 的结构是两层：外层是 `role="listbox"` 的内容容器，负责限高；
+ * 内层是 `role="presentation"` 的 Viewport（`flex: 1 1 0%`），才是真正滚动的元素。
+ * 只看外层的 scrollHeight 恒等于 clientHeight，会误判成「没有滚动」。
+ */
+async function measureDropdown(listbox: Locator) {
+  return listbox.evaluate((node) => {
+    const viewport = node.querySelector<HTMLElement>('[role="presentation"]')
+    if (!viewport) {
+      throw new Error("找不到 Radix Select 的 Viewport，DOM 结构可能变了")
+    }
+    viewport.scrollTop = 9_999
+    return {
+      listHeight: node.clientHeight,
+      scrollable: {
+        viewportClient: viewport.clientHeight,
+        viewportScroll: viewport.scrollHeight,
+        scrolledTo: viewport.scrollTop,
+      },
+    }
+  })
 }
 
 test.describe("platform announcement carousel", () => {
@@ -127,20 +152,21 @@ test.describe("platform announcement carousel", () => {
     await openAnnouncementAdmin(page)
     await page.getByTestId("announcement-create").click()
 
-    // 新建只插入本地行，尚未落库，因此标记为「未保存」且保存按钮可用。
-    const createdItem = page.locator(".announcement-admin-item").last()
-    await expect(createdItem.getByText("未保存")).toBeVisible()
+    // 新建只插入本地草稿并打开表单，尚未落库，因此表单里的保存按钮可用。
+    const form = page.getByTestId("announcement-form")
+    await expect(form).toBeVisible()
+    await expect(page.locator(".announcement-admin-item")).toHaveCount(0)
 
     // 标题和正文为空时不能保存：服务端 Schema 要求非空。
-    await expect(createdItem.getByTestId("announcement-save")).toBeDisabled()
+    await expect(form.getByTestId("announcement-save")).toBeDisabled()
 
-    await createdItem.getByLabel("标题").fill("E2E 平台公告")
-    await createdItem
-      .getByLabel("正文")
-      .fill("这条公告由端到端测试创建，用于验证轮播与关闭。")
-    await createdItem.getByTestId("announcement-save").click()
-    // 用「未保存」标记消失作为落库完成的同步点，不依赖 toast 停留时间。
-    await expect(page.getByText("未保存")).toHaveCount(0)
+    await form.getByLabel("标题").fill("E2E 平台公告")
+    await form.getByLabel("正文").fill("这条公告由端到端测试创建，用于验证轮播与关闭。")
+    await form.getByTestId("announcement-save").click()
+
+    // 保存后回到列表，条目出现即代表落库完成，不依赖 toast 停留时间。
+    const createdItem = page.locator(".announcement-admin-item").last()
+    await expect(createdItem).toContainText("E2E 平台公告")
 
     await page.keyboard.press("Escape")
     await expect(carousel).toBeVisible()
@@ -169,11 +195,11 @@ test.describe("platform announcement carousel", () => {
       await page.goto("/workspace")
       await openAnnouncementAdmin(page)
       await page.getByTestId("announcement-create").click()
-      const createdItem = page.locator(".announcement-admin-item").last()
-      await createdItem.getByLabel("标题").fill(title)
-      await createdItem.getByLabel("正文").fill("暂停后当前公告不会自动切换。")
-      await createdItem.getByTestId("announcement-save").click()
-      await expect(page.getByText("未保存")).toHaveCount(0)
+      const form = page.getByTestId("announcement-form")
+      await form.getByLabel("标题").fill(title)
+      await form.getByLabel("正文").fill("暂停后当前公告不会自动切换。")
+      await form.getByTestId("announcement-save").click()
+      await expect(page.locator(".announcement-admin-item").last()).toContainText(title)
       await page.keyboard.press("Escape")
     }
 
@@ -194,6 +220,7 @@ test.describe("platform announcement carousel", () => {
   test("discards an unsaved draft when the panel closes", async ({ page }) => {
     test.skip(!runAsAdmin, "需要 PLAYWRIGHT_AS_ADMIN=1 才能打开配置面板")
     const panelItems = page.locator(".announcement-admin-item")
+    const form = page.getByTestId("announcement-form")
 
     await clearAllAnnouncements(page)
     await page.goto("/workspace")
@@ -201,9 +228,8 @@ test.describe("platform announcement carousel", () => {
     await expect(panelItems).toHaveCount(0)
 
     await page.getByTestId("announcement-create").click()
-    const createdItem = panelItems.last()
-    await createdItem.getByLabel("标题").fill("未保存的草稿")
-    await createdItem.getByLabel("正文").fill("关闭面板后不应该留下任何数据。")
+    await form.getByLabel("标题").fill("未保存的草稿")
+    await form.getByLabel("正文").fill("关闭面板后不应该留下任何数据。")
 
     await page.keyboard.press("Escape")
     await expect(panelItems).toHaveCount(0)
@@ -215,5 +241,149 @@ test.describe("platform announcement carousel", () => {
 
     await page.reload()
     await expect(page.getByTestId("announcement-carousel")).toHaveCount(0)
+  })
+
+  test("shows the list first and only opens the form on demand", async ({ page }) => {
+    test.skip(!runAsAdmin, "需要 PLAYWRIGHT_AS_ADMIN=1 才能创建公告")
+    const panelItems = page.locator(".announcement-admin-item")
+    const form = page.getByTestId("announcement-form")
+
+    await clearAllAnnouncements(page)
+    await page.goto("/workspace")
+    await openAnnouncementAdmin(page)
+
+    // 打开面板停在列表：没有条目时也不该直接铺开一张表单。
+    await expect(page.getByTestId("announcement-create")).toBeVisible()
+    await expect(form).toHaveCount(0)
+
+    await page.getByTestId("announcement-create").click()
+    await form.getByLabel("标题").fill("E2E 按需编辑")
+    await form.getByLabel("正文").fill("列表与表单不应该同时出现。")
+    await form.getByTestId("announcement-save").click()
+
+    const createdItem = panelItems.last()
+    await expect(createdItem).toContainText("E2E 按需编辑")
+    await expect(form).toHaveCount(0)
+
+    // 编辑已有公告：条目摘要就位，表单带出已保存内容。
+    await createdItem.getByTestId("announcement-edit").click()
+    await expect(form.getByLabel("标题")).toHaveValue("E2E 按需编辑")
+    // 没改动时保存按钮必须禁用，避免无意义的写请求。
+    await expect(form.getByTestId("announcement-save")).toBeDisabled()
+
+    await form.getByLabel("标题").fill("E2E 按需编辑（已改）")
+    await expect(form.getByTestId("announcement-save")).toBeEnabled()
+    await form.getByTestId("announcement-save").click()
+    await expect(panelItems.last()).toContainText("E2E 按需编辑（已改）")
+
+    await clearAllAnnouncements(page)
+  })
+
+  test("drops a new draft when the admin leaves the form", async ({ page }) => {
+    test.skip(!runAsAdmin, "需要 PLAYWRIGHT_AS_ADMIN=1 才能创建公告")
+    const panelItems = page.locator(".announcement-admin-item")
+    const form = page.getByTestId("announcement-form")
+
+    await clearAllAnnouncements(page)
+    await page.goto("/workspace")
+    await openAnnouncementAdmin(page)
+
+    await page.getByTestId("announcement-create").click()
+    await form.getByLabel("标题").fill("会被放弃的草稿")
+    await form.getByLabel("正文").fill("放弃草稿后不应该留下任何数据。")
+    // 取消按钮在表单上方的工具栏里，不是表单的子节点。
+    await page.getByTestId("announcement-cancel").click()
+
+    // 放弃草稿等于删掉这一行，列表回到空态。
+    await expect(form).toHaveCount(0)
+    await expect(panelItems).toHaveCount(0)
+    await expect(page.getByTestId("announcement-admin-body")).toContainText(
+      "还没有公告",
+    )
+
+    await page.keyboard.press("Escape")
+    await expect(page.getByTestId("announcement-carousel")).toHaveCount(0)
+  })
+
+  test("caps the announcement time picker inside a scrollable calendar", async ({
+    page,
+  }) => {
+    test.skip(!runAsAdmin, "需要 PLAYWRIGHT_AS_ADMIN=1 才能打开配置面板")
+
+    await clearAllAnnouncements(page)
+    await page.goto("/workspace")
+    await openAnnouncementAdmin(page)
+    await page.getByTestId("announcement-create").click()
+
+    const trigger = page.getByTestId("announcement-form-starts-at-trigger")
+    await expect(trigger).toBeVisible()
+    await trigger.click()
+
+    // 日历必须限高并在自身内部滚动，否则会连时段选择一起顶出抽屉。
+    const calendar = page.locator(".announcement-time-calendar")
+    await expect(calendar).toBeVisible()
+    const metrics = await calendar.evaluate((node) => ({
+      clientHeight: node.clientHeight,
+      scrollHeight: node.scrollHeight,
+      overflowY: getComputedStyle(node).overflowY,
+    }))
+    expect(metrics.overflowY).toBe("auto")
+    // 限高按 15rem 生效，日历本身仍然高于可视高度，因此确实需要滚动。
+    expect(metrics.clientHeight).toBeLessThanOrEqual(15 * 16)
+    expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight)
+
+    // 收起日历后时段选择仍在同一个弹层里，没被顶出可视范围。
+    await page.keyboard.press("Escape")
+    await expect(calendar).toHaveCount(0)
+    await expect(trigger).toBeVisible()
+
+    await page.keyboard.press("Escape")
+  })
+
+  test("caps the hour and minute dropdowns inside a scrollable list", async ({
+    page,
+  }) => {
+    test.skip(!runAsAdmin, "需要 PLAYWRIGHT_AS_ADMIN=1 才能打开配置面板")
+
+    await clearAllAnnouncements(page)
+    await page.goto("/workspace")
+    await openAnnouncementAdmin(page)
+    await page.getByTestId("announcement-create").click()
+
+    await page.getByTestId("announcement-form-starts-at-trigger").click()
+
+    // 小时下拉有 24 项、每项 32px，自然高度 776px。
+    // Radix 给内容容器写死了行内 max-height: 100%，必须用 !important 压过。
+    await page.getByLabel("开始时间的小时").click()
+    const hourList = page.getByRole("listbox")
+    await expect(hourList).toBeVisible()
+    await expect(hourList.getByRole("option")).toHaveCount(24)
+    const hourMetrics = await measureDropdown(hourList)
+    // 外层被限高：不限高时实测 557px。
+    expect(hourMetrics.listHeight).toBeLessThanOrEqual(12 * 16)
+    // 真正滚动的是 Radix 的 Viewport（role=presentation，flex: 1 1 0%），
+    // 外层自己的 scrollHeight 恒等于 clientHeight，不能用来判断能否滚动。
+    expect(hourMetrics.scrollable.viewportScroll).toBeGreaterThan(
+      hourMetrics.scrollable.viewportClient,
+    )
+    // 并且真的能滚：滚到底后 scrollTop 大于 0。
+    expect(hourMetrics.scrollable.scrolledTo).toBeGreaterThan(0)
+    await page.keyboard.press("Escape")
+
+    // 分钟下拉 12 项，同样超过上限，行为必须一致。
+    await page.getByLabel("开始时间的分钟").click()
+    const minuteMetrics = await measureDropdown(page.getByRole("listbox"))
+    expect(minuteMetrics.listHeight).toBeLessThanOrEqual(12 * 16)
+    expect(minuteMetrics.scrollable.viewportScroll).toBeGreaterThan(
+      minuteMetrics.scrollable.viewportClient,
+    )
+
+    // 选一个值确认限高没有破坏交互：下拉仍然能选到 30 分。
+    await page.getByRole("option", { name: "30 分" }).click()
+    await expect(page.getByTestId("announcement-form-starts-at-trigger")).toContainText(
+      "09:30",
+    )
+
+    await page.keyboard.press("Escape")
   })
 })
