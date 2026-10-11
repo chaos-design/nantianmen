@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises"
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -59,6 +59,28 @@ describe("file announcement repository", () => {
     const stored = await repository.listAnnouncements()
 
     expect(stored.map((entry) => entry.title)).toEqual(["最前", newer.title, "第二个"])
+  })
+
+  it("breaks identical createdAt ties by insertion order with the newer first", async () => {
+    const repository = new FileAnnouncementRepository(databasePath)
+    await repository.createAnnouncement(createInput({ title: "第二个", sortOrder: 1 }))
+    await repository.createAnnouncement(
+      createInput({ title: "新的第一个", sortOrder: 1 }),
+    )
+
+    // CI 上两次创建可能落在同一毫秒，把 createdAt 改成完全相同来复现平局。
+    const contents = JSON.parse(await readFile(databasePath, "utf8")) as {
+      announcements: Array<{ createdAt: string }>
+    }
+    for (const announcement of contents.announcements) {
+      announcement.createdAt = "2026-01-01T00:00:00.000Z"
+    }
+    await writeFile(databasePath, JSON.stringify(contents), "utf8")
+
+    const stored = await new FileAnnouncementRepository(
+      databasePath,
+    ).listAnnouncements()
+    expect(stored.map((entry) => entry.title)).toEqual(["新的第一个", "第二个"])
   })
 
   it("keeps the original creation time on update", async () => {

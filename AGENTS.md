@@ -70,6 +70,7 @@ pnpm typecheck
 pnpm test
 pnpm test:coverage
 pnpm build
+pnpm check:budget
 ```
 
 端到端测试：

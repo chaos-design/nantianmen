@@ -148,11 +148,21 @@ test("shows a complete email-code login flow", async ({ page }) => {
   expect(alignment?.centerDelta).toBeLessThanOrEqual(1)
 
   await sendCodeButton.click()
-  await expect(page.getByText("请输入有效邮箱后再获取验证码")).toBeVisible()
+  await expect(
+    page.getByRole("alert").filter({ hasText: "请输入有效邮箱后再获取验证码" }),
+  ).toBeVisible()
+  await expect(
+    page
+      .locator("[data-sonner-toast]")
+      .filter({ hasText: "请输入有效邮箱后再获取验证码" }),
+  ).toBeVisible()
 
   await page.getByLabel("邮箱").fill("login-code@example.com")
   await sendCodeButton.click()
   await expect(page.getByRole("button", { name: "60s 后重发" })).toBeVisible()
+  await expect(
+    page.locator("[data-sonner-toast]").filter({ hasText: "验证码已发送，请查收邮箱" }),
+  ).toBeVisible()
   await expect(otpInput).toHaveAttribute("placeholder", "输入邮件中的数字验证码")
   expect(otpRequestBody).toEqual(
     expect.objectContaining({
@@ -232,7 +242,13 @@ test("sends password recovery through the callback and preserves the target", as
   await page.getByLabel("邮箱").fill("recovery@example.com")
   await page.getByRole("button", { name: "发送重置邮件" }).click()
 
-  await expect(page.getByText("如该邮箱已注册，密码重置邮件将很快送达。")).toBeVisible()
+  const recoveryNotice = "如该邮箱已注册，密码重置邮件将很快送达。"
+  await expect(
+    page.getByRole("status").filter({ hasText: recoveryNotice }),
+  ).toBeVisible()
+  await expect(
+    page.locator("[data-sonner-toast]").filter({ hasText: recoveryNotice }),
+  ).toBeVisible()
   expect(recoveryRequestBody).toEqual(
     expect.objectContaining({ email: "recovery@example.com" }),
   )
@@ -264,7 +280,12 @@ test("requires at least eight characters when resetting a password", async ({
   await password.fill("Short12")
   await confirmation.fill("Short12")
   await page.getByRole("button", { name: "更新密码" }).click()
-  await expect(page.getByText("密码至少需要 8 位")).toBeVisible()
+  await expect(
+    page.getByRole("alert").filter({ hasText: "密码至少需要 8 位" }),
+  ).toBeVisible()
+  await expect(
+    page.locator("[data-sonner-toast]").filter({ hasText: "密码至少需要 8 位" }),
+  ).toBeVisible()
   await expect(page).toHaveURL(/\/reset-password\?next=%2Fworkspace$/)
 })
 
@@ -331,7 +352,9 @@ test("keeps password login and registration as lightweight alternatives", async 
   await expect(registerButton).toBeEnabled()
   await registerButton.click()
   await expect(
-    page.getByText("请使用 QQ、网易、Gmail、Outlook 等常用邮箱注册"),
+    page
+      .getByRole("alert")
+      .filter({ hasText: "请使用 QQ、网易、Gmail、Outlook 等常用邮箱注册" }),
   ).toBeVisible()
   expect(signupRequestCount).toBe(0)
 
@@ -340,14 +363,21 @@ test("keeps password login and registration as lightweight alternatives", async 
   await page.getByLabel("邮箱").fill("registration-check@qq.com")
   await expect(registerButton).toBeEnabled()
   await registerButton.click()
-  await expect(page.getByText("密码至少需要 8 位")).toBeVisible()
+  await expect(
+    page.getByRole("alert").filter({ hasText: "密码至少需要 8 位" }),
+  ).toBeVisible()
   await expect(password).toHaveAttribute("aria-invalid", "true")
 
   await password.fill("StrongPass1!")
   await confirmation.fill("different")
   await registerButton.click()
-  const confirmationError = page.getByText("两次输入的密码不一致")
+  const confirmationError = page
+    .getByRole("alert")
+    .filter({ hasText: "两次输入的密码不一致" })
   await expect(confirmationError).toBeVisible()
+  await expect(
+    page.locator("[data-sonner-toast]").filter({ hasText: "两次输入的密码不一致" }),
+  ).toBeVisible()
   await expect(confirmation).toHaveAttribute("aria-invalid", "true")
   const confirmationLabel = page
     .locator('[data-slot="field"]')
@@ -382,6 +412,34 @@ test("keeps password login and registration as lightweight alternatives", async 
   await expect(page.locator("#password-confirmation")).toBeVisible()
 })
 
+test("announces a sent registration confirmation link with a toast", async ({
+  page,
+}) => {
+  let signupRequestCount = 0
+  await page.route("**/auth/v1/signup**", async (route) => {
+    signupRequestCount += 1
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: "{}",
+    })
+  })
+  await page.goto("/login")
+  await page.getByRole("button", { name: "没有账号？创建账户" }).click()
+  await page.getByLabel("邮箱").fill("toast-check@qq.com")
+  await page.locator("#password").fill("StrongPass1!")
+  await page.locator("#password-confirmation").fill("StrongPass1!")
+  await page.getByRole("checkbox", { name: "我已阅读并同意" }).click()
+  await page.getByRole("button", { name: /注册并发送确认链接/ }).click()
+
+  const notice = "确认链接已发送，请打开邮箱中的链接完成登录。"
+  await expect(page.getByRole("status").filter({ hasText: notice })).toBeVisible()
+  await expect(
+    page.locator("[data-sonner-toast]").filter({ hasText: notice }),
+  ).toBeVisible()
+  expect(signupRequestCount).toBe(1)
+})
+
 test("handles a non-JSON Preview failure without exposing a parse error", async ({
   page,
 }) => {
@@ -395,7 +453,14 @@ test("handles a non-JSON Preview failure without exposing a parse error", async 
   await page.goto("/login")
 
   await page.getByRole("button", { name: "Preview" }).click()
-  await expect(page.getByText("Preview 模式暂不可用，请稍后重试")).toBeVisible()
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Preview 模式暂不可用，请稍后重试" }),
+  ).toBeVisible()
+  await expect(
+    page
+      .locator("[data-sonner-toast]")
+      .filter({ hasText: "Preview 模式暂不可用，请稍后重试" }),
+  ).toBeVisible()
   await expect(page.getByText(/Unexpected token|Internal Server Error/)).toHaveCount(0)
 })
 

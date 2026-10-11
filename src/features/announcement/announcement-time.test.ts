@@ -6,6 +6,7 @@ import {
   composeAnnouncementIso,
   createDefaultAnnouncementParts,
   formatAnnouncementDateTime,
+  formatAnnouncementWindow,
   readAnnouncementDateTimeParts,
 } from "./announcement-time"
 
@@ -63,5 +64,31 @@ describe("announcement local time conversion", () => {
     expect(announcementMinuteOptions[0]).toBe(0)
     expect(announcementMinuteOptions.at(-1)).toBe(55)
     expect(announcementMinuteOptions.every((value) => value % 5 === 0)).toBe(true)
+  })
+
+  it("describes the effective window on the announcement list", () => {
+    const start = composeAnnouncementIso({
+      date: new Date(2026, 9, 5, 0, 0, 0, 0),
+      hour: 9,
+      minute: 0,
+    })
+    const end = composeAnnouncementIso({
+      date: new Date(2026, 9, 12, 0, 0, 0, 0),
+      hour: 18,
+      minute: 30,
+    })
+
+    expect(formatAnnouncementWindow(start, end)).toBe(
+      "2026-10-05 09:00 至 2026-10-12 18:30",
+    )
+    expect(formatAnnouncementWindow(start, null)).toBe("2026-10-05 09:00 起")
+    expect(formatAnnouncementWindow(null, end)).toBe("至 2026-10-12 18:30")
+  })
+
+  it("labels a window without boundaries as always on", () => {
+    // 「长期有效」和「还没配置过」在列表上必须区分开，不能都留白。
+    expect(formatAnnouncementWindow(null, null)).toBe("长期有效")
+    // 非法字符串等同于未设置，不能渲染成 "NaN"。
+    expect(formatAnnouncementWindow("not-a-date", null)).toBe("长期有效")
   })
 })

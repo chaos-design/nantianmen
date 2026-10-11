@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { PublicResumeActions } from "../../../features/resume-renderer/public-resume-actions"
+import { PublicResumeAttribution } from "../../../features/resume-renderer/public-resume-attribution"
 import {
   ResumePageContent,
   StaticResumeImageLayer,
@@ -51,7 +52,7 @@ export default async function PublicResumePage({ params }: PublicResumePageProps
           <span>Résumé Lab</span>
         </Link>
         <div>
-          <PublicResumeActions mode="a4" />
+          <PublicResumeActions mode="a4" publicSlug={result.resume.publicSlug} />
         </div>
       </header>
       <div className="public-resume-stage">
@@ -70,6 +71,7 @@ export default async function PublicResumePage({ params }: PublicResumePageProps
           ))}
         </div>
       </div>
+      <PublicResumeAttribution />
     </main>
   )
 }
