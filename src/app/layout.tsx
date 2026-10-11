@@ -1,8 +1,6 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata } from "next"
 import { TextSelectionShortcuts } from "../components/text-selection-shortcuts"
-import { Toaster } from "../components/ui/sonner"
-import { TooltipProvider } from "../components/ui/tooltip"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -25,12 +23,11 @@ export default function RootLayout({
     // 自己的版本戳，导致根元素属性 mismatch。根元素无动态属性，抑制无诊断损失。
     <html lang="zh-CN" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <TooltipProvider>
-          <TextSelectionShortcuts />
-          {children}
-          <Toaster position="top-center" richColors />
-          <Analytics />
-        </TooltipProvider>
+        {/* Tooltip/Toaster 只被编辑器与工作台路由使用，下移到各自 layout，
+            避免 radix tooltip、sonner 打进首页等全部路由的首屏脚本。 */}
+        <TextSelectionShortcuts />
+        {children}
+        <Analytics />
       </body>
     </html>
   )
