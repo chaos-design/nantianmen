@@ -1,4 +1,8 @@
-import { parseResumeDocument } from "../../shared/resume-schema/resume-schema"
+import {
+  parseResumeDocument,
+  type ResumeTemplateId,
+} from "../../shared/resume-schema/resume-schema"
+import { templateSchemes } from "../../shared/resume-template/template-schemes"
 import {
   createServerSupabaseClient,
   type ServerSupabaseClient,
@@ -66,14 +70,31 @@ function mapResume(row: DatabaseRow): ResumeRecord {
   }
 }
 
+/**
+ * 列表接口的取数口径：只抽取 draft_document 中工作台分组用到的
+ * template.id，避免整份简历文档随每次列表请求传输和解析。
+ * PostgREST 返回的 draft_document 是沿 JSON 路径的嵌套结构。
+ */
+export const RESUME_LIST_SELECT =
+  "id,owner_id,title,public_slug,draft_document->template->>id,draft_version,latest_publication_id,created_at,updated_at"
+
 function mapResumeSummary(row: DatabaseRow): ResumeSummary {
-  const document = parseResumeDocument(row.draft_document)
+  const nestedDocument = row.draft_document as
+    | { template?: { id?: unknown } }
+    | null
+    | undefined
+  const templateId = nestedDocument?.template?.id
   return {
     id: String(row.id),
     ownerId: row.owner_id ? String(row.owner_id) : null,
     title: String(row.title),
     publicSlug: String(row.public_slug),
-    templateId: document.template.id,
+    // 文档在写入时经过 Zod 校验，template.id 一定合法；
+    // 仅对异常数据兜底到默认模板，保证列表接口整体可用。
+    templateId:
+      typeof templateId === "string" && templateId.length > 0
+        ? (templateId as ResumeTemplateId)
+        : templateSchemes[0].id,
     draftVersion: Number(row.draft_version),
     latestPublicationId: row.latest_publication_id
       ? String(row.latest_publication_id)
@@ -156,9 +177,7 @@ export class SupabaseResumeRepository implements ResumeRepository {
   async listResumesByOwner(ownerId: string): Promise<ResumeSummary[]> {
     const { data, error } = await this.supabase
       .from("resumes")
-      .select(
-        "id,owner_id,title,public_slug,draft_document,draft_version,latest_publication_id,created_at,updated_at",
-      )
+      .select(RESUME_LIST_SELECT)
       .eq("owner_id", ownerId)
       .order("updated_at", { ascending: false })
 
@@ -169,9 +188,7 @@ export class SupabaseResumeRepository implements ResumeRepository {
   async listAllResumes(): Promise<ResumeSummary[]> {
     const { data, error } = await this.supabase
       .from("resumes")
-      .select(
-        "id,owner_id,title,public_slug,draft_document,draft_version,latest_publication_id,created_at,updated_at",
-      )
+      .select(RESUME_LIST_SELECT)
       .order("updated_at", { ascending: false })
 
     assertSupabaseSuccess(error)

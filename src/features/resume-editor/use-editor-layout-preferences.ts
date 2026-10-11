@@ -42,10 +42,15 @@ export function useEditorLayoutPreferences({
   const [preferencesReady, setPreferencesReady] = useState(false)
 
   useEffect(() => {
+    let resizeFrame = 0
     const updateViewportWidth = () => {
-      const nextViewportWidth = window.innerWidth
-      setViewportWidth(nextViewportWidth)
-      setLeftPanelWidth((current) => clampLeftPanelWidth(current, nextViewportWidth))
+      window.cancelAnimationFrame(resizeFrame)
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = 0
+        const nextViewportWidth = window.innerWidth
+        setViewportWidth(nextViewportWidth)
+        setLeftPanelWidth((current) => clampLeftPanelWidth(current, nextViewportWidth))
+      })
     }
     const savedWidth = Number(readPreference(leftPanelWidthStorageKey))
     setViewportWidth(window.innerWidth)
@@ -61,7 +66,10 @@ export function useEditorLayoutPreferences({
     setInspectorCollapsed(readPreference(inspectorCollapsedStorageKey) === "true")
     setPreferencesReady(true)
     window.addEventListener("resize", updateViewportWidth)
-    return () => window.removeEventListener("resize", updateViewportWidth)
+    return () => {
+      window.cancelAnimationFrame(resizeFrame)
+      window.removeEventListener("resize", updateViewportWidth)
+    }
   }, [])
 
   useEffect(() => {

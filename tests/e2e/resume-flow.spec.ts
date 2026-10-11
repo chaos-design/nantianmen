@@ -2942,6 +2942,9 @@ test("creates, edits, publishes, and shares a resume", async ({ page }) => {
     "data-web-template",
     "digital-archive",
   )
-  await expect(page.getByRole("link", { name: "A4 版" })).toHaveCount(0)
+  // 工具栏提供回跳 A4 分享页的入口，非法 template 参数回退不应影响它。
+  const a4Entry = page.getByRole("link", { name: "查看 A4 版简历" })
+  await expect(a4Entry).toHaveCount(1)
+  await expect(a4Entry).toHaveAttribute("href", new URL(shareUrl).pathname)
   expect(consoleErrors).toEqual([])
 })
