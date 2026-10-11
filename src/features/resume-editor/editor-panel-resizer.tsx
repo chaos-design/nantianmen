@@ -64,7 +64,34 @@ export function EditorPanelResizer({
     }
     dragStateRef.current = dragState
 
+    // 拖拽期间直接改写 .editor-workspace 上的 CSS 变量，
+    // 让面板宽度跟手且不触发编辑器整棵树的 React 重渲染；
+    // 松手时才提交一次 onResize（状态 + localStorage 各写一次）。
+    const workspace = (event.target as HTMLElement).closest<HTMLElement>(
+      ".editor-workspace",
+    )
+    workspace?.setAttribute("data-resizer-dragging", "true")
+
+    let frameId = 0
+    let pendingWidth: number | null = null
+
+    const applyDragWidth = (nextWidth: number) => {
+      if (!workspace) {
+        return
+      }
+      workspace.style.setProperty("--editor-left-width", `${nextWidth}px`)
+      workspace.style.setProperty("--editor-left-coverage", `${nextWidth}px`)
+    }
+
     const removeListeners = () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+        frameId = 0
+      }
+      if (pendingWidth !== null && workspace) {
+        applyDragWidth(pendingWidth)
+      }
+      workspace?.removeAttribute("data-resizer-dragging")
       window.removeEventListener("pointermove", handlePointerMove)
       window.removeEventListener("pointerup", finishPointerDrag)
       window.removeEventListener("pointercancel", finishPointerDrag)
@@ -76,17 +103,26 @@ export function EditorPanelResizer({
       if (pointerEvent.pointerId !== dragState.pointerId) {
         return
       }
-      onResize(
-        clampLeftPanelWidth(
-          dragState.startWidth + pointerEvent.clientX - dragState.startClientX,
-          viewportWidth,
-        ),
+      pendingWidth = clampLeftPanelWidth(
+        dragState.startWidth + pointerEvent.clientX - dragState.startClientX,
+        viewportWidth,
       )
+      if (!frameId) {
+        frameId = window.requestAnimationFrame(() => {
+          frameId = 0
+          if (pendingWidth !== null) {
+            applyDragWidth(pendingWidth)
+          }
+        })
+      }
     }
 
     const finishPointerDrag = (pointerEvent: PointerEvent) => {
       if (pointerEvent.pointerId === dragState.pointerId) {
+        const committedWidth =
+          pendingWidth ?? clampLeftPanelWidth(dragState.startWidth, viewportWidth)
         removeListeners()
+        onResize(committedWidth)
       }
     }
 

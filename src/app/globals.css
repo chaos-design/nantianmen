@@ -3432,6 +3432,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   background: linear-gradient(90deg, transparent, var(--primary), transparent);
   content: "";
   animation: landing-flow-signal 3.4s ease-in-out infinite;
+  /* 动画改为 transform，位移按元素自身宽度的 155%/45% 折算。 */
+  --landing-flow-travel: 344.44%;
 }
 
 .landing-preview-state {
@@ -3553,6 +3555,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   background: linear-gradient(90deg, transparent, var(--primary), transparent);
   content: "";
   animation: landing-flow-signal 3.8s 0.6s ease-in-out infinite;
+  /* 动画改为 transform，位移按元素自身宽度的 160%/50% 折算。 */
+  --landing-flow-travel: 320%;
 }
 
 .landing-outcomes article {
@@ -4100,6 +4104,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   background: linear-gradient(90deg, transparent, var(--primary), transparent);
   content: "";
   animation: landing-flow-signal 4s ease-in-out infinite;
+  /* 动画改为 transform，位移按元素自身宽度的 145%/35% 折算。 */
+  --landing-flow-travel: 414.29%;
 }
 
 .landing-impact-axis i:nth-of-type(2)::after {
@@ -4327,6 +4333,10 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
     transform 260ms cubic-bezier(0.2, 0.75, 0.25, 1),
     box-shadow 260ms ease,
     filter 260ms ease;
+  /* 轮播中有数十张 A4 卡片同时存在 DOM，视口外的卡片跳过排版绘制；
+     首次渲染前按卡片宽高比给出占位尺寸，保持横向轨道总宽稳定。 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto calc(var(--landing-template-card-width) * 1123 / 794);
 }
 
 .landing-template-group > article:is(:hover, :focus-within) > .landing-template-sheet {
@@ -5257,11 +5267,13 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   }
 }
 
+/* 用 transform 代替 left 做位移，避免无限动画每帧触发重排。
+   起始 left 保持静态值，位移量由各使用方通过 --landing-flow-travel 提供。 */
 @keyframes landing-flow-signal {
   0%,
   12% {
-    left: -45%;
     opacity: 0;
+    transform: translate3d(0, 0, 0);
   }
 
   24% {
@@ -5274,8 +5286,8 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
 
   88%,
   100% {
-    left: 110%;
     opacity: 0;
+    transform: translate3d(var(--landing-flow-travel, 0%), 0, 0);
   }
 }
 
@@ -5452,6 +5464,14 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
   opacity: 0;
   pointer-events: none;
   transform: translateX(calc(-100% - 1px));
+}
+
+/* 拖拽分隔条时关闭 width/left/padding 过渡：面板宽度直接改写 CSS 变量
+   跟手，180ms 过渡会让拖动产生拖影。 */
+.editor-workspace[data-resizer-dragging="true"] .content-editor-panel,
+.editor-workspace[data-resizer-dragging="true"] .editor-panel-resizer,
+.editor-workspace[data-resizer-dragging="true"] .a4-canvas {
+  transition: none;
 }
 
 .editor-panel-resizer {

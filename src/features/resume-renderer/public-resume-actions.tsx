@@ -1,6 +1,6 @@
 "use client"
 
-import { AppWindowIcon, LinkIcon, PrinterIcon } from "lucide-react"
+import { AppWindowIcon, FileTextIcon, LinkIcon, PrinterIcon } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { Button } from "../../components/ui/button"
@@ -40,6 +40,17 @@ export function PublicResumeActions({ mode, publicSlug }: PublicResumeActionsPro
         <Button size="xs" onClick={() => window.print()}>
           <PrinterIcon data-icon="inline-start" />
           打印
+        </Button>
+      ) : null}
+      {mode === "web" ? (
+        <Button size="xs" variant="outline" asChild>
+          <Link
+            href={`/r/${encodeURIComponent(publicSlug)}`}
+            aria-label="查看 A4 版简历"
+          >
+            <FileTextIcon data-icon="inline-start" />
+            查看 A4 版
+          </Link>
         </Button>
       ) : null}
     </>

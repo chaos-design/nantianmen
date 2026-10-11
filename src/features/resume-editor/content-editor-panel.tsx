@@ -1,10 +1,12 @@
 "use client"
 
 import { BracesIcon, ListTreeIcon, PanelLeftCloseIcon } from "lucide-react"
+import dynamic from "next/dynamic"
 import { useEffect, useRef } from "react"
 import { Button } from "../../components/ui/button"
 import { ScrollArea } from "../../components/ui/scroll-area"
 import { Separator } from "../../components/ui/separator"
+import { Skeleton } from "../../components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
 import type { ResumeLinkTarget } from "../../shared/resume-schema/resume-link-target"
 import type {
@@ -13,11 +15,31 @@ import type {
   ResumeSectionType,
 } from "../../shared/resume-schema/resume-schema"
 import type { EditorFocusRequest } from "./editor-focus-request"
-import { ResumeJsonEditor } from "./resume-json-editor"
 import { SectionEditor } from "./section-editor"
 import { SectionNavigation } from "./section-navigation"
 
 export type ContentEditorTab = "form" | "json"
+
+/**
+ * Monaco JSON 编辑器拆成独立 chunk：
+ * 首次切到 JSON 标签页才下载，编辑器主界面不需要预先携带
+ * @monaco-editor/react 与语法解析依赖。
+ */
+const ResumeJsonEditor = dynamic(
+  () => import("./resume-json-editor").then((module) => module.ResumeJsonEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="resume-json-editor-loading">
+        <span className="sr-only">JSON 编辑器加载中</span>
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+        <Skeleton />
+      </div>
+    ),
+  },
+)
 
 interface ContentEditorPanelProps {
   document: ResumeDocument
