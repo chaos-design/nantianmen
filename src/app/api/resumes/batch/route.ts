@@ -1,4 +1,7 @@
-import { requireAuthContext } from "../../../../server/auth/auth-context"
+import {
+  getTestResumePolicy,
+  requireAuthContext,
+} from "../../../../server/auth/auth-context"
 import { ResumeService } from "../../../../server/domain/resume-service"
 import {
   apiError,
@@ -18,7 +21,7 @@ export async function DELETE(request: Request) {
     const body = (await request.json().catch(() => ({}))) as {
       resumeIds?: unknown
     }
-    const service = new ResumeService(getResumeRepository())
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
     const deletedCount = await service.deleteResumes(body.resumeIds, actor)
     return apiSuccess({ deletedCount }, requestId)
   } catch (error) {

@@ -1,6 +1,9 @@
 import { AiService, assertAiRateLimit } from "../../../../../server/ai/ai-service"
 import { resolveAiClient } from "../../../../../server/ai/resolve-ai-client"
-import { requireAuthContext } from "../../../../../server/auth/auth-context"
+import {
+  getTestResumePolicy,
+  requireAuthContext,
+} from "../../../../../server/auth/auth-context"
 import {
   assertWritableActor,
   DomainError,
@@ -43,7 +46,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const repository = getResumeRepository()
-    const resumeService = new ResumeService(repository)
+    const resumeService = new ResumeService(repository, getTestResumePolicy())
     await resumeService.getEditableResume(params["resume-id"], actor)
 
     const clientAddress =

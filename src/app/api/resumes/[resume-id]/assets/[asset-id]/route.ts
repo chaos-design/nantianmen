@@ -1,5 +1,8 @@
 import { getResumeAssetStorage } from "../../../../../../server/assets/resume-asset-storage-factory"
-import { requireAuthContext } from "../../../../../../server/auth/auth-context"
+import {
+  getTestResumePolicy,
+  requireAuthContext,
+} from "../../../../../../server/auth/auth-context"
 import { ResumeAssetService } from "../../../../../../server/domain/resume-asset-service"
 import { apiError, getRequestId } from "../../../../../../server/http/api-response"
 import { assetResponse } from "../../../../../../server/http/asset-response"
@@ -23,6 +26,7 @@ export async function GET(request: Request, context: RouteContext) {
     const service = new ResumeAssetService(
       getResumeRepository(),
       getResumeAssetStorage(),
+      getTestResumePolicy(),
     )
     const asset = await service.getPrivateAsset(
       params["resume-id"],
@@ -44,6 +48,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     const service = new ResumeAssetService(
       getResumeRepository(),
       getResumeAssetStorage(),
+      getTestResumePolicy(),
     )
     await service.deleteAsset(params["resume-id"], params["asset-id"], actor)
     return new Response(null, {

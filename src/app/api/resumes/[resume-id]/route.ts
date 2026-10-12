@@ -1,4 +1,7 @@
-import { requireAuthContext } from "../../../../server/auth/auth-context"
+import {
+  getTestResumePolicy,
+  requireAuthContext,
+} from "../../../../server/auth/auth-context"
 import { ResumeService } from "../../../../server/domain/resume-service"
 import {
   apiError,
@@ -19,7 +22,7 @@ export async function GET(request: Request, context: RouteContext) {
   try {
     const actor = await requireAuthContext()
     const params = await context.params
-    const service = new ResumeService(getResumeRepository())
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
     const resume = await service.getEditableResume(params["resume-id"], actor)
     return apiSuccess(resume, requestId)
   } catch (error) {
@@ -37,7 +40,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       expectedVersion: number
       document: unknown
     }
-    const service = new ResumeService(getResumeRepository())
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
     const resume = await service.saveDraft({
       resumeId: params["resume-id"],
       actor,
@@ -56,7 +59,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     assertSameOrigin(request)
     const actor = await requireAuthContext()
     const params = await context.params
-    const service = new ResumeService(getResumeRepository())
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
     await service.deleteResume(params["resume-id"], actor)
     return new Response(null, {
       status: 204,

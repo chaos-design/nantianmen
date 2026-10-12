@@ -1,4 +1,8 @@
 import { getResumeAssetStorage } from "../../../../../../server/assets/resume-asset-storage-factory"
+import {
+  getOptionalPublicViewer,
+  getTestResumePolicy,
+} from "../../../../../../server/auth/auth-context"
 import { ResumeAssetService } from "../../../../../../server/domain/resume-asset-service"
 import { apiError, getRequestId } from "../../../../../../server/http/api-response"
 import { assetResponse } from "../../../../../../server/http/asset-response"
@@ -20,10 +24,13 @@ export async function GET(request: Request, context: RouteContext) {
     const service = new ResumeAssetService(
       getResumeRepository(),
       getResumeAssetStorage(),
+      getTestResumePolicy(),
     )
+    const viewer = await getOptionalPublicViewer()
     const asset = await service.getPublicAsset(
       params["public-slug"],
       params["asset-id"],
+      viewer,
     )
     return assetResponse(asset, "public, max-age=3600, must-revalidate")
   } catch (error) {

@@ -1,4 +1,7 @@
-import { requireAuthContext } from "../../../server/auth/auth-context"
+import {
+  getTestResumePolicy,
+  requireAuthContext,
+} from "../../../server/auth/auth-context"
 import { ResumeService } from "../../../server/domain/resume-service"
 import { apiError, apiSuccess, getRequestId } from "../../../server/http/api-response"
 import { assertSameOrigin } from "../../../server/http/request-origin"
@@ -10,7 +13,7 @@ export async function GET(request: Request) {
   const requestId = getRequestId(request)
   try {
     const actor = await requireAuthContext()
-    const service = new ResumeService(getResumeRepository())
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
     const resumes = await service.listResumes(actor)
     return apiSuccess(resumes, requestId)
   } catch (error) {
@@ -27,7 +30,7 @@ export async function POST(request: Request) {
       initialDocument?: unknown
       templateId?: unknown
     }
-    const service = new ResumeService(getResumeRepository())
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
     const result = await service.createResume(
       actor,
       body.initialDocument,

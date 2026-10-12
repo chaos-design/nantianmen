@@ -29,7 +29,7 @@ export interface PublicationRecord {
 }
 
 export interface PublicResumeRecord {
-  resume: Pick<ResumeRecord, "id" | "title" | "publicSlug">
+  resume: Pick<ResumeRecord, "id" | "title" | "publicSlug" | "ownerId">
   publication: PublicationRecord
 }
 
@@ -300,6 +300,7 @@ export class InMemoryResumeRepository implements ResumeRepository {
         id: resume.id,
         title: resume.title,
         publicSlug: resume.publicSlug,
+        ownerId: resume.ownerId,
       },
       publication: structuredClone(publication),
     }
@@ -321,6 +322,7 @@ export class InMemoryResumeRepository implements ResumeRepository {
         id: resume.id,
         title: resume.title,
         publicSlug: resume.publicSlug,
+        ownerId: resume.ownerId,
       },
       publication: structuredClone(publication),
     }

@@ -43,6 +43,7 @@ Application variables:
 | `NEXT_PUBLIC_SUPABASE_URL` | Browser | Public Supabase URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser | Browser publishable key |
 | `ADMIN_USER_ID` | Server | Confirmed administrator Auth UUID |
+| `TEST_USER_ID` | Server | Optional test account Auth UUID. When set, resumes owned by that account are test resumes: only the account itself and administrators can read them; other accounts cannot reach them through lists, detail reads, or public share links |
 | `PREVIEW_USER_ID` | Server | Read-only Preview account UUID |
 | `PREVIEW_USER_EMAIL` | Server | Read-only Preview account email |
 | `PREVIEW_RESUME_ID` | Server | Fixed Preview resume UUID |
@@ -56,7 +57,7 @@ Optional global AI provider:
 
 The global AI provider is enabled only when all three values are present. Because the global AI config is sent to editable users' browsers, use a rotatable least-privilege key.
 
-Never configure `AUTH_TEST_USER_ID` or `AUTH_TEST_USER_EMAIL` in a deployed environment; the server refuses to start when they are present. `AUTH_TEST_*` and `RESUME_FILE_*` exist only for Playwright-injected local test runs.
+Never configure `AUTH_TEST_USER_ID` or `AUTH_TEST_USER_EMAIL` in a deployed environment; the server refuses to start when they are present. `AUTH_TEST_*` and `RESUME_FILE_*` exist only for Playwright-injected local test runs. `TEST_USER_ID` is a separate variable that may be configured in deployed environments to isolate the resumes of a test account.
 
 ## Supabase Setup
 

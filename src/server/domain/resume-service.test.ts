@@ -10,7 +10,7 @@ import {
   InMemoryResumeRepository,
   VersionConflictError,
 } from "../repositories/resume-repository"
-import { type Actor, ResumeService } from "./resume-service"
+import { type Actor, ResumeService, type TestResumePolicy } from "./resume-service"
 
 const member: Actor = {
   userId: "00000000-0000-4000-8000-000000000001",
@@ -24,17 +24,21 @@ const admin: Actor = {
   userId: "00000000-0000-4000-8000-000000000003",
   isAdmin: true,
 }
+const testUser: Actor = {
+  userId: "00000000-0000-4000-8000-000000000009",
+  isAdmin: false,
+}
 const preview: Actor = {
   userId: member.userId,
   isAdmin: false,
   mode: "preview",
 }
 
-function createService() {
+function createService(testResumePolicy?: TestResumePolicy) {
   const repository = new InMemoryResumeRepository()
   return {
     repository,
-    service: new ResumeService(repository),
+    service: new ResumeService(repository, testResumePolicy),
   }
 }
 
@@ -354,6 +358,69 @@ describe("ResumeService", () => {
     await expect(service.getPublicResume("not-published")).rejects.toMatchObject({
       code: "PUBLIC_RESUME_NOT_FOUND",
       status: 404,
+    })
+  })
+
+  it("keeps test-account resumes out of other members' lists and detail reads", async () => {
+    const { service } = createService({ testUserId: testUser.userId })
+    const testResume = await service.createResume(testUser)
+
+    await expect(service.listResumes(testUser)).resolves.toEqual([
+      expect.objectContaining({ id: testResume.resume.id }),
+    ])
+    await expect(service.listResumes(otherMember)).resolves.toEqual([])
+    await expect(service.listResumes(admin)).resolves.toEqual([
+      expect.objectContaining({ id: testResume.resume.id }),
+    ])
+    await expect(
+      service.getEditableResume(testResume.resume.id, testUser),
+    ).resolves.toMatchObject({ id: testResume.resume.id })
+    await expect(
+      service.getEditableResume(testResume.resume.id, otherMember),
+    ).rejects.toMatchObject({ code: "RESUME_NOT_FOUND", status: 404 })
+    await expect(
+      service.getEditableResume(testResume.resume.id, admin),
+    ).resolves.toMatchObject({ id: testResume.resume.id })
+  })
+
+  it("serves test resumes publicly only to the test account and administrators", async () => {
+    const { service } = createService({ testUserId: testUser.userId })
+    const testResume = await service.createResume(testUser)
+    const memberResume = await service.createResume(member)
+    const testPublication = await service.publishResume(testResume.resume.id, testUser)
+    const memberPublication = await service.publishResume(
+      memberResume.resume.id,
+      member,
+    )
+
+    await expect(
+      service.getPublicResume(testPublication.resume.publicSlug),
+    ).rejects.toMatchObject({ code: "PUBLIC_RESUME_NOT_FOUND", status: 404 })
+    await expect(
+      service.getPublicResume(testPublication.resume.publicSlug, otherMember),
+    ).rejects.toMatchObject({ code: "PUBLIC_RESUME_NOT_FOUND", status: 404 })
+    await expect(
+      service.getPublicResume(testPublication.resume.publicSlug, testUser),
+    ).resolves.toMatchObject({
+      resume: expect.objectContaining({
+        publicSlug: testPublication.resume.publicSlug,
+      }),
+    })
+    await expect(
+      service.getPublicResume(testPublication.resume.publicSlug, admin),
+    ).resolves.toMatchObject({
+      resume: expect.objectContaining({
+        publicSlug: testPublication.resume.publicSlug,
+      }),
+    })
+
+    // 未配置测试账号时，普通简历的公开分享行为不受影响。
+    await expect(
+      service.getPublicResume(memberPublication.resume.publicSlug),
+    ).resolves.toMatchObject({
+      resume: expect.objectContaining({
+        publicSlug: memberPublication.resume.publicSlug,
+      }),
     })
   })
 })
