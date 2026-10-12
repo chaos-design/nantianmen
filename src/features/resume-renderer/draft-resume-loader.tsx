@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "../../components/ui/skeleton"
 import type { EditableResume } from "../../server/domain/resume-service"
 import type { ResumeDocument } from "../../shared/resume-schema/resume-schema"
+import { mergeStoredAssets } from "../../shared/resume-schema/stored-asset-merge"
 import { listResumeAssets, loadResume } from "../resume-editor/editor-api"
 import { usePrivateAssetUrls } from "../resume-editor/use-private-asset-urls"
 import { consumeDraftPreviewSnapshot } from "./draft-preview-session"
@@ -27,15 +28,31 @@ interface DraftResumeLoaderResult {
 export function useDraftResumeLoader(
   resumeId: string,
   loadAssetUrls = true,
+  initialResume: EditableResume | null = null,
+  initialError: string | null = null,
 ): DraftResumeLoaderResult {
-  const [resume, setResume] = useState<EditableResume | null>(null)
-  const [error, setError] = useState("")
+  const [resume, setResume] = useState<EditableResume | null>(() => initialResume)
+  const [error, setError] = useState(initialError ?? "")
   const assetUrls = usePrivateAssetUrls(
     resumeId,
     loadAssetUrls ? (resume?.document.resources.assets ?? []) : [],
   )
 
   useEffect(() => {
+    if (initialResume || initialError) {
+      // 服务端已取齐初始数据：仅应用同会话未保存的草稿预览快照。
+      const snapshot = consumeDraftPreviewSnapshot(resumeId)
+      if (initialResume && snapshot) {
+        setResume({
+          ...initialResume,
+          document: mergeStoredAssets(
+            snapshot,
+            initialResume.document.resources.assets,
+          ),
+        })
+      }
+      return
+    }
     let active = true
     void loadResume(resumeId)
       .then(async (loadedResume) => {
@@ -47,19 +64,10 @@ export function useDraftResumeLoader(
         }
         const previewDocument =
           consumeDraftPreviewSnapshot(resumeId) ?? loadedResume.document
-        const existingAssetIds = new Set(
-          previewDocument.resources.assets.map((asset) => asset.id),
+        const document: ResumeDocument = mergeStoredAssets(
+          previewDocument,
+          storedAssets,
         )
-        const document: ResumeDocument = {
-          ...previewDocument,
-          resources: {
-            ...previewDocument.resources,
-            assets: [
-              ...previewDocument.resources.assets,
-              ...storedAssets.filter((asset) => !existingAssetIds.has(asset.id)),
-            ],
-          },
-        }
         setResume({ ...loadedResume, document })
       })
       .catch((loadError) => {
@@ -74,7 +82,7 @@ export function useDraftResumeLoader(
     return () => {
       active = false
     }
-  }, [resumeId])
+  }, [initialError, initialResume, resumeId])
 
   return { resume, assetUrls, error }
 }

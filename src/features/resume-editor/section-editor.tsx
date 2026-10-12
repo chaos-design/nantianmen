@@ -475,7 +475,9 @@ export function SectionEditor({
         </CardContent>
       </Card>
 
+      {/* 稳定 id：让 DndContext 的 DndDescribedBy 在 SSR/客户端一致，避免 hydration 告警 */}
       <DndContext
+        id="resume-section-editor"
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}

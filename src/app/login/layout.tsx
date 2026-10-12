@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import "../../styles/auth.css"
 import { Toaster } from "../../components/ui/sonner"
 
 // 登录表单通过 toast 反馈错误与「邮件已发送」状态（见 login-form），

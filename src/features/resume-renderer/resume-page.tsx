@@ -92,6 +92,7 @@ export function StaticResumeImageLayer({
         if (!source) {
           return null
         }
+        // 首页放置图可能成为 LCP 元素：高优先级预取；其余页面不占带宽。
         return (
           // biome-ignore lint/performance/noImgElement: private publication assets are already validated and dimensioned
           <img
@@ -100,6 +101,7 @@ export function StaticResumeImageLayer({
             key={placement.id}
             src={source}
             alt={asset.alt}
+            fetchPriority={pageIndex === 0 ? "high" : "low"}
             style={{
               ...getPlacementStyle(placement),
               objectFit: placement.objectFit,
