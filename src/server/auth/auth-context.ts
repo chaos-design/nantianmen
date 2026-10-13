@@ -1,4 +1,5 @@
 import { createClient } from "../../lib/supabase/server"
+import type { TestResumePolicy } from "../domain/resume-service"
 import { readAuthConfig } from "./auth-config"
 import { readPreviewSession } from "./preview-session"
 import { previewSessionCookieName } from "./preview-session-cookie"
@@ -111,4 +112,25 @@ export async function requireAuthContext(options?: {
     throw new AuthenticationError("AUTH_REQUIRED", "请先登录后再继续", 401)
   }
   return context
+}
+
+/** 读取测试简历隔离策略；未配置 TEST_USER_ID 时不隔离任何简历。 */
+export function getTestResumePolicy(
+  environment: Environment = process.env,
+): TestResumePolicy {
+  return { testUserId: readAuthConfig(environment).testUserId }
+}
+
+/**
+ * 公开分享路径的可选身份解析。
+ *
+ * 鉴权基础设施异常（例如未配置 Supabase 的文件后端）时按匿名处理，
+ * 保证公开页不因鉴权故障整体不可用；此时测试简历一律按不可见处理。
+ */
+export async function getOptionalPublicViewer(): Promise<AuthContext | null> {
+  try {
+    return await getOptionalAuthContext()
+  } catch {
+    return null
+  }
 }

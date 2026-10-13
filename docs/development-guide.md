@@ -200,6 +200,9 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 
 ADMIN_USER_ID=your-confirmed-admin-user-uuid
 
+# 可选：测试账号。配置后该账号名下的简历为测试简历，仅本人与管理员可读。
+TEST_USER_ID=your-test-account-user-uuid
+
 PREVIEW_USER_ID=your-preview-user-uuid
 PREVIEW_USER_EMAIL=preview@example.com
 PREVIEW_RESUME_ID=your-preview-resume-uuid
@@ -221,6 +224,7 @@ AI_API_KEY=provider-api-key
 | `NEXT_PUBLIC_SUPABASE_URL` | 是 | 浏览器可见的 Supabase URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 是 | 浏览器可见的 publishable key |
 | `ADMIN_USER_ID` | 是 | 已确认管理员账号的 Supabase Auth UUID |
+| `TEST_USER_ID` | 否 | 测试账号的 Supabase Auth UUID；配置后该账号名下的简历为测试简历，仅账号本人和管理员可以读取 |
 | `SUPABASE_STORAGE_BUCKET` | 否 | 私有 Bucket 名，缺省为 `resume-assets`，与 `supabase/platform.sql` 保持一致 |
 
 `NEXT_PUBLIC_*` 会在 `pnpm build` 阶段写入客户端产物。本地修改后需要重启
@@ -254,11 +258,22 @@ AI_API_KEY=provider-api-key
 - 未配置或 Provider 调用失败时，AI API 返回明确错误，不回退到本地模板。
 - 自动化测试身份由 `playwright.config.ts` 在测试进程中注入，不写入 `.env`。
 - `AUTH_TEST_USER_ID`、`AUTH_TEST_USER_EMAIL` 只允许出现在测试进程。
-  生产环境检测到这两个变量会直接抛错拒绝启动。
+  生产环境检测到这两个变量会直接抛错拒绝启动。它们与 `TEST_USER_ID`
+  不是同一个变量：前者是测试进程的登录身份，后者是生产也可配置的测试账号。
 - `RESUME_FILE_DATABASE_PATH`、`RESUME_FILE_ASSET_DIR` 只用于文件后端，
   生产环境把 `RESUME_DATA_BACKEND` 设为 `file` 会直接抛错。
 - `.env` 仅供本地开发。Vercel Development、Preview 和 Production 的变量均在
   Vercel Project Settings 中配置，不从本地文件上传。
+
+测试账号与测试简历隔离：
+
+- 配置 `TEST_USER_ID` 后，该账号名下的简历视为测试简历。
+- 工作台列表和简历详情沿用归属校验：测试简历只出现在测试账号自己的工作台，
+  其他成员既看不到也打不开；管理员不受限制。
+- 公开分享路径（`/r/:slug`、`/r/:slug/web`、
+  `/api/public-resumes/:slug` 及其图片资源）对测试简历额外校验身份：
+  匿名访问和其他成员访问都按不存在处理，只有测试账号本人和管理员可以阅读。
+- 未配置 `TEST_USER_ID` 时行为与之前完全一致，所有已发布简历继续匿名可读。
 
 ### 4.5 启动项目
 
@@ -274,7 +289,8 @@ pnpm dev
 2. 管理员账号可以进入工作台。
 3. 可以创建、保存并重新加载简历。
 4. 可以上传图片并访问编辑器预览。
-5. 发布后 `/r/:slug` 和 `/r/:slug/web` 可以匿名访问。
+5. 发布后 `/r/:slug` 和 `/r/:slug/web` 可以匿名访问；测试账号名下的测试简历
+   除外，仅账号本人和管理员可以阅读。
 
 ## 5. 常用命令
 

@@ -98,6 +98,7 @@ Required runtime variables:
 | `NEXT_PUBLIC_SUPABASE_URL` | Browser | Public Supabase URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser | Browser publishable key |
 | `ADMIN_USER_ID` | Server | Confirmed administrator Auth UUID |
+| `TEST_USER_ID` | Server | Optional test account Auth UUID. When set, resumes owned by that account are test resumes: only the account itself and administrators can read them |
 | `PREVIEW_USER_ID` | Server | Read-only Preview account UUID |
 | `PREVIEW_USER_EMAIL` | Server | Read-only Preview account email |
 | `PREVIEW_RESUME_ID` | Server | Fixed Preview resume UUID |
@@ -110,6 +111,13 @@ Optional AI variables:
 - `AI_API_KEY`
 
 All three AI variables must be configured together. Global AI configuration is visible to editable users in the browser, so use a rotatable least-privilege key.
+
+Test account and test resume isolation:
+
+- When `TEST_USER_ID` is configured, resumes owned by that account are treated as test resumes.
+- Workspace lists and resume detail reads keep the existing ownership rules: test resumes only appear in the test account's own workspace, other members can neither see nor open them, and administrators are exempt.
+- Public share paths (`/r/:slug`, `/r/:slug/web`, `/api/public-resumes/:slug`, and its image assets) additionally verify the viewer for test resumes: anonymous visitors and other members get the same not-found response as unpublished resumes, while the test account itself and administrators can read them.
+- Without `TEST_USER_ID` nothing changes and every published resume stays anonymously readable.
 
 ## Development Workflow
 

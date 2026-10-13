@@ -1,3 +1,7 @@
+import {
+  getOptionalPublicViewer,
+  getTestResumePolicy,
+} from "../../../../server/auth/auth-context"
 import { ResumeService } from "../../../../server/domain/resume-service"
 import {
   apiError,
@@ -16,8 +20,9 @@ export async function GET(request: Request, context: RouteContext) {
   const requestId = getRequestId(request)
   try {
     const params = await context.params
-    const service = new ResumeService(getResumeRepository())
-    const result = await service.getPublicResume(params["public-slug"])
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
+    const viewer = await getOptionalPublicViewer()
+    const result = await service.getPublicResume(params["public-slug"], viewer)
     return apiSuccess(
       {
         title: result.resume.title,

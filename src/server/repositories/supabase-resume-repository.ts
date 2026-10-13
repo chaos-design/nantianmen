@@ -268,6 +268,7 @@ export class SupabaseResumeRepository implements ResumeRepository {
         id: resume.id,
         title: resume.title,
         publicSlug: resume.publicSlug,
+        ownerId: resume.ownerId,
       },
       publication: mapPublication(result.publication),
     }
@@ -303,6 +304,7 @@ export class SupabaseResumeRepository implements ResumeRepository {
         id: resume.id,
         title: resume.title,
         publicSlug: resume.publicSlug,
+        ownerId: resume.ownerId,
       },
       publication: mapPublication(publicationRow as DatabaseRow),
     }

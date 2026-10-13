@@ -138,6 +138,8 @@ SUPABASE_STORAGE_BUCKET=resume-assets
 NEXT_PUBLIC_SUPABASE_URL=https://environment-project.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=environment-publishable-key
 ADMIN_USER_ID=environment-admin-user-uuid
+# 可选：测试账号。配置后该账号名下的简历为测试简历，仅本人与管理员可读。
+TEST_USER_ID=environment-test-account-user-uuid
 PREVIEW_USER_ID=environment-preview-user-uuid
 PREVIEW_USER_EMAIL=preview@example.com
 PREVIEW_RESUME_ID=environment-preview-resume-uuid
@@ -163,6 +165,7 @@ AI_API_KEY=provider-api-key
 | --- | --- |
 | `SUPABASE_SERVICE_ROLE_KEY` | 只属于服务端，禁止添加 `NEXT_PUBLIC_` 前缀 |
 | `ADMIN_USER_ID` | 必须是对应环境中已确认账号的 Auth UUID |
+| `TEST_USER_ID` | 可选，测试账号的 Auth UUID；配置后该账号名下的简历为测试简历，仅账号本人和管理员可以读取，其他账号无法通过列表、详情或公开分享链接读到 |
 | `NEXT_PUBLIC_*` | 构建阶段写入客户端产物，变更后必须重新部署 |
 | `PREVIEW_*` | 必须同时提供，且 `PREVIEW_SESSION_SECRET` 至少 32 个字符 |
 | `AI_*` | 必须三项同时配置才会启用全局默认 Provider |

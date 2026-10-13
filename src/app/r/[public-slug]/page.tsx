@@ -8,6 +8,10 @@ import {
   StaticResumeImageLayer,
 } from "../../../features/resume-renderer/resume-page"
 import { paginateResumeDocument } from "../../../features/resume-renderer/resume-pagination"
+import {
+  getOptionalPublicViewer,
+  getTestResumePolicy,
+} from "../../../server/auth/auth-context"
 import { ResumeService } from "../../../server/domain/resume-service"
 import { getResumeRepository } from "../../../server/repositories/repository-factory"
 
@@ -19,8 +23,9 @@ interface PublicResumePageProps {
 
 async function getPublicResume(publicSlug: string) {
   try {
-    const service = new ResumeService(getResumeRepository())
-    return await service.getPublicResume(publicSlug)
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
+    const viewer = await getOptionalPublicViewer()
+    return await service.getPublicResume(publicSlug, viewer)
   } catch {
     notFound()
   }

@@ -2,6 +2,7 @@ type Environment = Readonly<Record<string, string | undefined>>
 
 export interface AuthConfig {
   adminUserId: string | null
+  testUserId: string | null
   testUser: {
     userId: string
     email: string
@@ -39,7 +40,8 @@ function assertUuid(value: string, name: string): void {
 
 export function readAuthConfig(environment: Environment = process.env): AuthConfig {
   const adminUserId = readOptionalValue(environment, "ADMIN_USER_ID")
-  const testUserId = readOptionalValue(environment, "AUTH_TEST_USER_ID")
+  const testUserId = readOptionalValue(environment, "TEST_USER_ID")
+  const testUserIdForAuth = readOptionalValue(environment, "AUTH_TEST_USER_ID")
   const testUserEmail = readOptionalValue(environment, "AUTH_TEST_USER_EMAIL")
   const previewUserId = readOptionalValue(environment, "PREVIEW_USER_ID")
   const previewUserEmail = readOptionalValue(environment, "PREVIEW_USER_EMAIL")
@@ -53,16 +55,19 @@ export function readAuthConfig(environment: Environment = process.env): AuthConf
   if (isProduction && !adminUserId) {
     throw new AuthConfigurationError("生产环境缺少服务端配置：ADMIN_USER_ID")
   }
-  if (Boolean(testUserId) !== Boolean(testUserEmail)) {
+  if (testUserId) {
+    assertUuid(testUserId, "TEST_USER_ID")
+  }
+  if (Boolean(testUserIdForAuth) !== Boolean(testUserEmail)) {
     throw new AuthConfigurationError(
       "AUTH_TEST_USER_ID 与 AUTH_TEST_USER_EMAIL 必须同时配置",
     )
   }
-  if (isProduction && (testUserId || testUserEmail)) {
+  if (isProduction && (testUserIdForAuth || testUserEmail)) {
     throw new AuthConfigurationError("生产环境禁止配置 AUTH_TEST_*")
   }
-  if (testUserId) {
-    assertUuid(testUserId, "AUTH_TEST_USER_ID")
+  if (testUserIdForAuth) {
+    assertUuid(testUserIdForAuth, "AUTH_TEST_USER_ID")
   }
   const previewValues = [
     previewUserId,
@@ -87,10 +92,11 @@ export function readAuthConfig(environment: Environment = process.env): AuthConf
 
   return {
     adminUserId,
+    testUserId,
     testUser:
-      testUserId && testUserEmail
+      testUserIdForAuth && testUserEmail
         ? {
-            userId: testUserId,
+            userId: testUserIdForAuth,
             email: testUserEmail,
           }
         : null,

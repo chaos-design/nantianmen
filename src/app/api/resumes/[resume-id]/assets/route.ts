@@ -1,5 +1,8 @@
 import { getResumeAssetStorage } from "../../../../../server/assets/resume-asset-storage-factory"
-import { requireAuthContext } from "../../../../../server/auth/auth-context"
+import {
+  getTestResumePolicy,
+  requireAuthContext,
+} from "../../../../../server/auth/auth-context"
 import {
   MAX_UPLOAD_REQUEST_BYTES,
   ResumeAssetService,
@@ -20,7 +23,11 @@ interface RouteContext {
 }
 
 function createService(): ResumeAssetService {
-  return new ResumeAssetService(getResumeRepository(), getResumeAssetStorage())
+  return new ResumeAssetService(
+    getResumeRepository(),
+    getResumeAssetStorage(),
+    getTestResumePolicy(),
+  )
 }
 
 export async function GET(request: Request, context: RouteContext) {

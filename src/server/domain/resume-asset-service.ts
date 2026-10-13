@@ -9,7 +9,10 @@ import {
   type Actor,
   assertWritableActor,
   authorizeResume,
+  canViewerReadTestResume,
   DomainError,
+  isTestResume,
+  type TestResumePolicy,
 } from "./resume-service"
 
 export const MAX_ASSET_BYTES = 5 * 1024 * 1024
@@ -360,6 +363,7 @@ export class ResumeAssetService {
   constructor(
     private readonly repository: ResumeRepository,
     private readonly storage: ResumeAssetStorage,
+    private readonly testResumePolicy: TestResumePolicy = { testUserId: null },
   ) {}
 
   async uploadAsset(input: {
@@ -475,8 +479,20 @@ export class ResumeAssetService {
     return this.readAsset(asset)
   }
 
-  async getPublicAsset(publicSlug: string, assetId: string): Promise<AssetBinary> {
+  async getPublicAsset(
+    publicSlug: string,
+    assetId: string,
+    viewer?: Actor | null,
+  ): Promise<AssetBinary> {
     const publicResume = await this.repository.findPublicResume(publicSlug)
+    if (
+      publicResume &&
+      isTestResume(publicResume.resume.ownerId, this.testResumePolicy.testUserId) &&
+      !canViewerReadTestResume(viewer ?? null, publicResume.resume)
+    ) {
+      // 与资源不存在保持一致的回退，不暴露测试简历是否发布过。
+      throw new DomainError("ASSET_NOT_FOUND", "图片资源不存在", 404)
+    }
     const isReferenced =
       publicResume?.publication.publishedDocument.resources.placements.some(
         (placement) => placement.assetId === assetId,

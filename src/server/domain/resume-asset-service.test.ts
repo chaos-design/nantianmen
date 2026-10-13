@@ -7,7 +7,7 @@ import {
   MAX_ASSET_BYTES,
   ResumeAssetService,
 } from "./resume-asset-service"
-import { type Actor, ResumeService } from "./resume-service"
+import { type Actor, ResumeService, type TestResumePolicy } from "./resume-service"
 
 const actor: Actor = {
   userId: "00000000-0000-4000-8000-000000000001",
@@ -15,6 +15,14 @@ const actor: Actor = {
 }
 const otherActor: Actor = {
   userId: "00000000-0000-4000-8000-000000000002",
+  isAdmin: false,
+}
+const adminActor: Actor = {
+  userId: "00000000-0000-4000-8000-000000000003",
+  isAdmin: true,
+}
+const testUser: Actor = {
+  userId: "00000000-0000-4000-8000-000000000009",
   isAdmin: false,
 }
 
@@ -54,14 +62,14 @@ function createAssetRecord(
   }
 }
 
-function createServices() {
+function createServices(testResumePolicy?: TestResumePolicy) {
   const repository = new InMemoryResumeRepository()
   const storage = new InMemoryResumeAssetStorage()
   return {
     repository,
     storage,
-    resumeService: new ResumeService(repository),
-    assetService: new ResumeAssetService(repository, storage),
+    resumeService: new ResumeService(repository, testResumePolicy),
+    assetService: new ResumeAssetService(repository, storage, testResumePolicy),
   }
 }
 
@@ -480,5 +488,60 @@ describe("ResumeAssetService", () => {
     await expect(
       assetService.deleteAsset(created.resume.id, publishedAsset.id, actor),
     ).rejects.toMatchObject({ code: "ASSET_PUBLISHED", status: 409 })
+  })
+
+  it("keeps public assets of test resumes away from anonymous and other members", async () => {
+    const { assetService, resumeService } = createServices({
+      testUserId: testUser.userId,
+    })
+    const created = await resumeService.createResume(testUser)
+    const asset = await assetService.uploadAsset({
+      resumeId: created.resume.id,
+      actor: testUser,
+      originalName: "test.png",
+      providedMimeType: "image/png",
+      bytes: pngBytes,
+    })
+    const document = {
+      ...created.resume.document,
+      resources: {
+        assets: [asset],
+        placements: [
+          {
+            id: "placement-1",
+            assetId: asset.id,
+            pageIndex: 0,
+            x: 32,
+            y: 32,
+            width: 144,
+            height: 144,
+            zIndex: 1,
+            objectFit: "cover" as const,
+            shape: "circle" as const,
+          },
+        ],
+      },
+    }
+    await resumeService.saveDraft({
+      resumeId: created.resume.id,
+      actor: testUser,
+      expectedVersion: 1,
+      document,
+    })
+    const publication = await resumeService.publishResume(created.resume.id, testUser)
+    const publicSlug = publication.resume.publicSlug
+
+    await expect(
+      assetService.getPublicAsset(publicSlug, asset.id),
+    ).rejects.toMatchObject({ code: "ASSET_NOT_FOUND", status: 404 })
+    await expect(
+      assetService.getPublicAsset(publicSlug, asset.id, otherActor),
+    ).rejects.toMatchObject({ code: "ASSET_NOT_FOUND", status: 404 })
+    await expect(
+      assetService.getPublicAsset(publicSlug, asset.id, testUser),
+    ).resolves.toMatchObject({ mimeType: "image/png" })
+    await expect(
+      assetService.getPublicAsset(publicSlug, asset.id, adminActor),
+    ).resolves.toMatchObject({ mimeType: "image/png" })
   })
 })

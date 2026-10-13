@@ -1,4 +1,7 @@
-import { requireAuthContext } from "../../../../../server/auth/auth-context"
+import {
+  getTestResumePolicy,
+  requireAuthContext,
+} from "../../../../../server/auth/auth-context"
 import { ResumeService } from "../../../../../server/domain/resume-service"
 import {
   apiError,
@@ -20,7 +23,7 @@ export async function POST(request: Request, context: RouteContext) {
     assertSameOrigin(request)
     const actor = await requireAuthContext()
     const params = await context.params
-    const service = new ResumeService(getResumeRepository())
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
     const result = await service.publishResume(params["resume-id"], actor)
     return apiSuccess(
       {

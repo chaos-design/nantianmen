@@ -46,6 +46,38 @@ export interface Actor {
   previewResumeId?: string
 }
 
+/**
+ * 测试简历隔离策略。配置了 TEST_USER_ID 时，该账号名下的简历视为测试简历：
+ * 除账号本人和管理员外，任何身份都不能通过列表、详情或公开分享路径读到。
+ */
+export interface TestResumePolicy {
+  readonly testUserId: string | null
+}
+
+export function isTestResume(
+  ownerId: string | null,
+  testUserId: string | null,
+): boolean {
+  return testUserId !== null && ownerId === testUserId
+}
+
+export function canViewerReadTestResume(
+  viewer: Actor | null,
+  resume: { id: string; ownerId: string | null },
+): boolean {
+  if (!viewer) {
+    return false
+  }
+  if (viewer.isAdmin) {
+    return true
+  }
+  if (viewer.userId === resume.ownerId) {
+    return true
+  }
+  // Preview 会话由管理员绑定到固定简历，保留其只读演示能力。
+  return viewer.mode === "preview" && viewer.previewResumeId === resume.id
+}
+
 export interface ResumeListItem {
   id: string
   ownerId: string | null
@@ -151,7 +183,10 @@ export function assertWritableActor(actor: Actor): void {
 }
 
 export class ResumeService {
-  constructor(private readonly repository: ResumeRepository) {}
+  constructor(
+    private readonly repository: ResumeRepository,
+    private readonly testResumePolicy: TestResumePolicy = { testUserId: null },
+  ) {}
 
   async createResume(
     actor: Actor,
@@ -277,9 +312,19 @@ export class ResumeService {
     }
   }
 
-  async getPublicResume(publicSlug: string): Promise<PublicResumeRecord> {
+  async getPublicResume(
+    publicSlug: string,
+    viewer?: Actor | null,
+  ): Promise<PublicResumeRecord> {
     const result = await this.repository.findPublicResume(publicSlug)
     if (!result) {
+      throw new DomainError("PUBLIC_RESUME_NOT_FOUND", "该简历不存在或尚未发布", 404)
+    }
+    if (
+      isTestResume(result.resume.ownerId, this.testResumePolicy.testUserId) &&
+      !canViewerReadTestResume(viewer ?? null, result.resume)
+    ) {
+      // 与未发布保持一致的回退，不暴露测试简历是否存在。
       throw new DomainError("PUBLIC_RESUME_NOT_FOUND", "该简历不存在或尚未发布", 404)
     }
     validateDocument(result.publication.publishedDocument)

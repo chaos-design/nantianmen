@@ -4,6 +4,10 @@ import { notFound } from "next/navigation"
 import { PublicResumeActions } from "../../../../features/resume-renderer/public-resume-actions"
 import { PublicResumeAttribution } from "../../../../features/resume-renderer/public-resume-attribution"
 import { ResumeWebPage } from "../../../../features/resume-renderer/resume-web-page"
+import {
+  getOptionalPublicViewer,
+  getTestResumePolicy,
+} from "../../../../server/auth/auth-context"
 import { ResumeService } from "../../../../server/domain/resume-service"
 import { getResumeRepository } from "../../../../server/repositories/repository-factory"
 import { resolveWebTemplateId } from "../../../../shared/resume-template/web-template-schemes"
@@ -17,8 +21,9 @@ interface PublicResumeWebPageProps {
 
 async function getPublicResume(publicSlug: string) {
   try {
-    const service = new ResumeService(getResumeRepository())
-    return await service.getPublicResume(publicSlug)
+    const service = new ResumeService(getResumeRepository(), getTestResumePolicy())
+    const viewer = await getOptionalPublicViewer()
+    return await service.getPublicResume(publicSlug, viewer)
   } catch {
     notFound()
   }

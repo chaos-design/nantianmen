@@ -266,6 +266,7 @@ export class FileResumeRepository implements ResumeRepository {
           id: resume.id,
           title: resume.title,
           publicSlug: resume.publicSlug,
+          ownerId: resume.ownerId,
         },
         publication: structuredClone(publication),
       }
@@ -289,6 +290,7 @@ export class FileResumeRepository implements ResumeRepository {
         id: resume.id,
         title: resume.title,
         publicSlug: resume.publicSlug,
+        ownerId: resume.ownerId,
       },
       publication: structuredClone(publication),
     }

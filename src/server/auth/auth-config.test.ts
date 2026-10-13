@@ -16,6 +16,7 @@ describe("auth config", () => {
       }),
     ).toEqual({
       adminUserId: userId,
+      testUserId: null,
       testUser: {
         userId,
         email: "tester@example.com",
@@ -27,6 +28,7 @@ describe("auth config", () => {
   it("allows development without an administrator until auth is used", () => {
     expect(readAuthConfig({ NODE_ENV: "development" })).toEqual({
       adminUserId: null,
+      testUserId: null,
       testUser: null,
       preview: null,
     })
@@ -43,6 +45,7 @@ describe("auth config", () => {
       }),
     ).toEqual({
       adminUserId: null,
+      testUserId: null,
       testUser: null,
       preview: {
         userId,
@@ -51,6 +54,30 @@ describe("auth config", () => {
         sessionSecret: previewSecret,
       },
     })
+  })
+
+  it("parses the test account used to isolate test resumes", () => {
+    expect(
+      readAuthConfig({
+        NODE_ENV: "production",
+        ADMIN_USER_ID: userId,
+        TEST_USER_ID: userId,
+      }),
+    ).toEqual({
+      adminUserId: userId,
+      testUserId: userId,
+      testUser: null,
+      preview: null,
+    })
+  })
+
+  it("rejects an invalid test account id", () => {
+    expect(() =>
+      readAuthConfig({
+        NODE_ENV: "test",
+        TEST_USER_ID: "not-a-uuid",
+      }),
+    ).toThrow("TEST_USER_ID 必须是有效 UUID")
   })
 
   it("requires a valid administrator in production", () => {
