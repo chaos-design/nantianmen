@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import {
-  deleteResume,
-  EditorApiError,
-  listResumes,
-  loadPrivateAssetBlob,
-} from "./editor-api"
+import { deleteResume, EditorApiError, listResumes } from "./editor-api"
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response)
@@ -91,18 +86,5 @@ describe("editor API", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/resumes/resume-1", {
       method: "DELETE",
     })
-  })
-
-  it("returns private asset blobs without JSON parsing", async () => {
-    stubFetch(
-      new Response(new Blob(["asset-bytes"], { type: "image/png" }), {
-        status: 200,
-      }),
-    )
-
-    const blob = await loadPrivateAssetBlob("resume-1", "asset-1")
-
-    expect(blob.type).toBe("image/png")
-    await expect(blob.text()).resolves.toBe("asset-bytes")
   })
 })

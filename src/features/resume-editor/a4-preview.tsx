@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { preload } from "react-dom"
 import { Badge } from "../../components/ui/badge"
 import type { ResumeLinkTarget } from "../../shared/resume-schema/resume-link-target"
 import type {
@@ -180,6 +181,11 @@ export function A4Preview({
   const pages = paginateResumeDocument(document)
   const [transientPlacement, setTransientPlacement] =
     useState<ResumeImagePlacement | null>(null)
+  // 加载失败的资源回退为占位符：例如导入的 JSON 引用了其他简历的资产，
+  // 图片接口会返回 404；此时保留「加载图片」占位而不是裂图。
+  const [failedAssetIds, setFailedAssetIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  )
   const transientPlacementRef = useRef<ResumeImagePlacement | null>(null)
   const gestureRef = useRef<PlacementGesture | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -187,6 +193,16 @@ export function A4Preview({
     selectedPageIndex,
     pages.length,
   )
+
+  // 首页放置图可能成为 LCP 元素：渲染期同步预载。SSR 会把预载链接写进
+  // <head>，浏览器解析 HTML 时即开始拉取图片，与 CSS/脚本并行，而不是等
+  // 画布深处的 <img> 标签被发现后才发起请求。React 对同一地址自动去重。
+  for (const placement of getPagePlacements(document, 0, pages.length)) {
+    const url = assetUrls[placement.assetId]
+    if (url) {
+      preload(url, { as: "image", fetchPriority: "high" })
+    }
+  }
 
   function handleCanvasClick(event: MouseEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement
@@ -449,13 +465,24 @@ export function A4Preview({
                       onPointerUp={(event) => finishGesture(event, true)}
                       onPointerCancel={(event) => finishGesture(event, false)}
                     >
-                      {assetUrls[asset.id] ? (
-                        // biome-ignore lint/performance/noImgElement: authenticated Blob URLs cannot use the Next image optimizer
+                      {assetUrls[asset.id] && !failedAssetIds.has(asset.id) ? (
+                        // biome-ignore lint/performance/noImgElement: authenticated assets cannot use the Next image optimizer
                         <img
                           className="resume-placed-image"
                           src={assetUrls[asset.id]}
                           alt={asset.alt}
                           draggable={false}
+                          fetchPriority={index === 0 ? "high" : "auto"}
+                          onError={() => {
+                            setFailedAssetIds((current) => {
+                              if (current.has(asset.id)) {
+                                return current
+                              }
+                              const next = new Set(current)
+                              next.add(asset.id)
+                              return next
+                            })
+                          }}
                           style={{ objectFit: renderedPlacement.objectFit }}
                         />
                       ) : (

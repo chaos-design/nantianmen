@@ -14,37 +14,50 @@ export interface EditorInitialData {
 /**
  * 编辑器路由的服务端初始数据：草稿 + 已存储资源一次取齐，
  * 让首屏 HTML 直接包含可编辑内容，避免客户端拉取瀑布。
+ *
+ * 两个读取互不依赖（都只需要 resumeId + actor），并行发出以压缩 TTFB；
+ * 任一失败时保持与串行版本相同的兜底语义。
  */
 export async function loadEditorInitialData(
   resumeId: string,
   actor: Actor,
 ): Promise<EditorInitialData> {
   const repository = getResumeRepository()
-  let baseResume: EditableResume
-  try {
-    const service = new ResumeService(repository)
-    baseResume = await service.getEditableResume(resumeId, actor)
-  } catch (error) {
+  const assetService = new ResumeAssetService(repository, getResumeAssetStorage())
+  const [resumeOutcome, storedAssets] = await Promise.all([
+    new ResumeService(repository).getEditableResume(resumeId, actor).then(
+      (
+        resume,
+      ): { ok: true; resume: EditableResume } | { ok: false; error: unknown } => ({
+        ok: true,
+        resume,
+      }),
+      (error: unknown): { ok: false; error: unknown } => ({ ok: false, error }),
+    ),
+    // 与客户端 loadResume 的兜底保持一致：资源列表不可用时沿用文档内资源。
+    assetService
+      .listAssets(resumeId, actor)
+      .catch((): ResumeImageAsset[] | null => null),
+  ])
+
+  if (!resumeOutcome.ok) {
     return {
       resume: null,
       error:
-        error instanceof DomainError ? error.message : "简历加载失败，请稍后重试。",
+        resumeOutcome.error instanceof DomainError
+          ? resumeOutcome.error.message
+          : "简历加载失败，请稍后重试。",
     }
   }
 
-  let storedAssets: ResumeImageAsset[]
-  try {
-    const assetService = new ResumeAssetService(repository, getResumeAssetStorage())
-    storedAssets = await assetService.listAssets(resumeId, actor)
-  } catch {
-    // 与客户端 loadResume 的兜底保持一致：资源列表不可用时沿用文档内资源。
-    storedAssets = baseResume.document.resources.assets
-  }
-
+  const baseResume = resumeOutcome.resume
   return {
     resume: {
       ...baseResume,
-      document: mergeStoredAssets(baseResume.document, storedAssets),
+      document: mergeStoredAssets(
+        baseResume.document,
+        storedAssets ?? baseResume.document.resources.assets,
+      ),
     },
     error: null,
   }
