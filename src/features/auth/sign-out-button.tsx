@@ -2,20 +2,23 @@
 
 import { LogOutIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Button } from "../../components/ui/button"
 import { Spinner } from "../../components/ui/spinner"
-import { createClient } from "../../lib/supabase/client"
 
 export function SignOutButton() {
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   async function handleSignOut() {
     setIsSigningOut(true)
     await fetch("/api/auth/preview", { method: "DELETE" }).catch(() => undefined)
-    await supabase.auth.signOut()
+    // supabase-js 只为登出服务：点击时才动态加载，
+    // 不让整套 auth-sdk 进入工作台首屏脚本。
+    const { createClient } = await import("../../lib/supabase/client")
+    await createClient()
+      .auth.signOut()
+      .catch(() => undefined)
     router.replace("/")
     router.refresh()
   }
