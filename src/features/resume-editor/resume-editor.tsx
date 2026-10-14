@@ -544,7 +544,7 @@ export function ResumeEditor({ resumeId, aiStorageOwnerId }: ResumeEditorProps) 
     <main className="editor-shell">
       <header className="editor-topbar">
         <div className="editor-brand-area">
-          <Link className="brand-mark brand-mark-compact" href="/">
+          <Link className="brand-mark brand-mark-compact" href="/workspace">
             <span>R</span>
             <span>Résumé Lab</span>
           </Link>
