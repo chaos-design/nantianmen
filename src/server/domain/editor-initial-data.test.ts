@@ -61,6 +61,6 @@ describe("loadEditorInitialData", () => {
       owner,
     )
     expect(result.resume).toBeNull()
-    expect(result.error).toBe("简历不存在")
+    expect(result.error).toBe("该简历不存在，或当前登录账号没有它的编辑权限")
   })
 })

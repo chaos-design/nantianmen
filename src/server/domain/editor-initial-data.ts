@@ -41,11 +41,14 @@ export async function loadEditorInitialData(
   ])
 
   if (!resumeOutcome.ok) {
+    const error = resumeOutcome.error
     return {
       resume: null,
       error:
-        resumeOutcome.error instanceof DomainError
-          ? resumeOutcome.error.message
+        error instanceof DomainError
+          ? error.code === "RESUME_NOT_FOUND"
+            ? "该简历不存在，或当前登录账号没有它的编辑权限"
+            : error.message
           : "简历加载失败，请稍后重试。",
     }
   }

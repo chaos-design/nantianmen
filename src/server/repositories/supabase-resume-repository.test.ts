@@ -139,12 +139,13 @@ describe("supabase resume repository", () => {
     const selectCalls: string[] = []
     const rows = [
       {
+        // PostgREST 对 `template_id:draft_document->template->>id`
+        // 这类别名 JSON 路径只返回别名字段本身，不返回嵌套文档。
         id: "resume-1",
         owner_id: ownerId,
         title: "Resume A",
         public_slug: "slug-a",
-        // PostgREST 按 JSON 路径 select 时返回嵌套结构，而不是整份文档。
-        draft_document: { template: { id: "modern-minimal" } },
+        template_id: "modern-minimal",
         draft_version: 2,
         latest_publication_id: "publication-1",
         created_at: "2026-08-01T00:00:00.000Z",
@@ -155,7 +156,8 @@ describe("supabase resume repository", () => {
         owner_id: ownerId,
         title: "Resume B",
         public_slug: "slug-b",
-        draft_document: null,
+        // 缺少别名兜底字段时回落默认模板，但 id 不得被模板 id 覆盖。
+        template_id: null,
         draft_version: 1,
         latest_publication_id: null,
         created_at: "2026-08-01T00:00:00.000Z",
@@ -187,7 +189,11 @@ describe("supabase resume repository", () => {
 
     const summaries = await repository.listResumesByOwner(ownerId)
 
+    // 回归：JSON 路径字段必须显式别名（template_id:...），否则 PostgREST
+    // 会用 `id` 命名该字段并覆盖真实简历 id，工作台所有卡片将链接到模板 id。
+    expect(RESUME_LIST_SELECT).toContain("template_id:draft_document->template->>id")
     expect(selectCalls).toEqual([RESUME_LIST_SELECT])
+    expect(summaries.map((summary) => summary.id)).toEqual(["resume-1", "resume-2"])
     expect(summaries).toEqual([
       {
         id: "resume-1",

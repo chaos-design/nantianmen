@@ -116,11 +116,19 @@ function validateTemplateId(input: unknown): ResumeTemplateId | undefined {
   return input as ResumeTemplateId
 }
 
+// 简历 id 恒为数据库生成的 UUID；拦截非法形状（如误把模板 id 当
+// 简历 id 传入）时直接按不存在处理，避免把无效值透传给数据库查询。
+const resumeIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
 export async function authorizeResume(
   repository: ResumeRepository,
   resumeId: string,
   actor: Actor,
 ): Promise<ResumeRecord> {
+  if (!resumeIdPattern.test(resumeId)) {
+    throw new DomainError("RESUME_NOT_FOUND", "简历不存在", 404)
+  }
   const record = await repository.findResumeById(resumeId)
   if (!record) {
     throw new DomainError("RESUME_NOT_FOUND", "简历不存在", 404)

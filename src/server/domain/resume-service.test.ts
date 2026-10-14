@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { maximumMemberResumeCount } from "../../shared/resume-schema/resume-policy"
 import {
   createResumeDocument,
@@ -67,6 +67,23 @@ describe("ResumeService", () => {
         status: 404,
       },
     )
+  })
+
+  it("rejects non-uuid resume ids without querying the repository", async () => {
+    // 回归：列表接口历史 bug 曾让模板 id（如 modern-minimal）流入编辑器
+    // 路由；非法形状必须按不存在处理，而不是透传给数据库触发 500。
+    const repository = new InMemoryResumeRepository()
+    const findResumeById = vi.fn()
+    repository.findResumeById = findResumeById
+    const service = new ResumeService(repository)
+
+    await expect(
+      service.getEditableResume("modern-minimal", member),
+    ).rejects.toMatchObject({
+      code: "RESUME_NOT_FOUND",
+      status: 404,
+    })
+    expect(findResumeById).not.toHaveBeenCalled()
   })
 
   it("lists only owned resumes unless the actor is an administrator", async () => {
