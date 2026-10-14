@@ -255,6 +255,11 @@ export function LoginForm({
     return callbackUrl.toString()
   }
 
+  /** 登录成功即离开 Preview 会话：避免 Preview cookie 抢占真实登录身份。 */
+  async function clearPreviewSession(): Promise<void> {
+    await fetch("/api/auth/preview", { method: "DELETE" }).catch(() => undefined)
+  }
+
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     clearFeedback()
@@ -316,6 +321,7 @@ export function LoginForm({
       if (signInError) {
         throw signInError
       }
+      await clearPreviewSession()
       toast.success("登录成功")
       router.replace(nextPath)
       router.refresh()
@@ -393,6 +399,7 @@ export function LoginForm({
       if (verifyError) {
         throw verifyError
       }
+      await clearPreviewSession()
       toast.success("登录成功")
       router.replace(nextPath)
       router.refresh()

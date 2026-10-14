@@ -73,23 +73,23 @@ function mapResume(row: DatabaseRow): ResumeRecord {
 /**
  * 列表接口的取数口径：只抽取 draft_document 中工作台分组用到的
  * template.id，避免整份简历文档随每次列表请求传输和解析。
- * PostgREST 返回的 draft_document 是沿 JSON 路径的嵌套结构。
+ *
+ * JSON 路径字段必须用 `template_id:` 显式别名：PostgREST 会用路径
+ * 最后一个键命名返回字段，未加别名时 `->template->>id` 会被命名为
+ * `id`，直接覆盖真实的简历 id 列，导致工作台所有卡片链接指向
+ * 模板 id（非 UUID）而全部打不开。
  */
 export const RESUME_LIST_SELECT =
-  "id,owner_id,title,public_slug,draft_document->template->>id,draft_version,latest_publication_id,created_at,updated_at"
+  "id,owner_id,title,public_slug,template_id:draft_document->template->>id,draft_version,latest_publication_id,created_at,updated_at"
 
 function mapResumeSummary(row: DatabaseRow): ResumeSummary {
-  const nestedDocument = row.draft_document as
-    | { template?: { id?: unknown } }
-    | null
-    | undefined
-  const templateId = nestedDocument?.template?.id
+  const templateId = row.template_id
   return {
     id: String(row.id),
     ownerId: row.owner_id ? String(row.owner_id) : null,
     title: String(row.title),
     publicSlug: String(row.public_slug),
-    // 文档在写入时经过 Zod 校验，template.id 一定合法；
+    // 别名字段在写入时经过 Zod 校验，template.id 一定合法；
     // 仅对异常数据兜底到默认模板，保证列表接口整体可用。
     templateId:
       typeof templateId === "string" && templateId.length > 0
