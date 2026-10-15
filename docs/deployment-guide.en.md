@@ -11,9 +11,11 @@ Résumé Lab uses:
 - Vercel for hosting the Next.js application.
 - Supabase for Auth, PostgreSQL, and private Storage.
 - Vercel Git integration as the deployment entry: `main` builds to Production, other branches and pull requests build Preview Deployments.
-- GitHub Actions as the quality gate and the auditable release archive.
+- GitHub Actions as the quality gate: `ci.yml` before merge, `publish.yml` after `main` updates.
 
-The two channels are independent. The Git integration owns production traffic, while `publish.yml` produces a versioned build archive and a GitHub Release. If only one deployment channel is needed, disable automatic deployments in Vercel Project Settings → Git, or stop `publish.yml`. Do not let both channels own production.
+Deployment does not depend on Vercel CLI credentials stored in GitHub. The Git
+integration owns production traffic, and `publish.yml` only runs the quality
+gate — it does not build, archive, or deploy.
 
 ## Environment Isolation
 
@@ -100,25 +102,20 @@ Variable sources per channel:
 | Channel | Source |
 | --- | --- |
 | Vercel Git automatic deployment | Injected by Vercel at build time from the target Environment |
-| Publish workflow | `vercel pull` from Vercel Project Settings |
+| Manual deployment (local `vercel` CLI) | `vercel pull` from Vercel Project Settings |
 | Local development | `.env`, loaded by Next.js |
 
 A failed build usually means a missing `NEXT_PUBLIC_*` value. Read the build log in Vercel Dashboard → Deployments, fix the target Environment, and redeploy. Never place real values in `vercel.json` or source code.
 
 ## GitHub Actions Setup
 
-Create GitHub Environments:
+No Vercel credentials are configured in GitHub. The repository does not store
+`VERCEL_TOKEN` or similar secrets: GitHub Actions only runs quality gates, and
+builds and deployments are performed by Vercel's own GitHub App.
 
-- `preview`
-- `production`
-
-Configure the following secrets in each environment:
-
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
-
-The production environment may require reviewers if the team wants an approval gate before production releases.
+Merge approval should come from branch protection: require the `quality` and
+`e2e` checks, a review approval, and linear history; merging into `main`
+triggers the automatic deployment.
 
 ## Automated Release Flow
 
@@ -131,18 +128,13 @@ Vercel Git integration:
 
 The Git integration does not run Playwright. To guarantee that only tested code reaches production, make the `quality` and `e2e` checks required in GitHub branch protection.
 
-Publish workflow archive channel, on `main` updates:
+Publish workflow quality gate, on `main` updates:
 
-1. Run Biome, TypeScript, and Vitest quality checks.
+1. Run Biome, TypeScript, and Vitest quality checks plus the coverage thresholds.
 2. Run Playwright end-to-end tests.
-3. Pull target Vercel environment configuration.
-4. Build Vercel output.
-5. Package the build output as a versioned archive.
-6. Upload the archive as a GitHub Artifact.
-7. Deploy the same prebuilt output to Vercel.
-8. Create or update the GitHub Release for production deployments.
-
-Production version format is based on the package major/minor version and the GitHub Actions run number.
+3. The workflow performs no builds, no archive uploads, and no deployments; it
+   requires no Vercel credentials. Deployment state is read from Vercel
+   Dashboard → Deployments.
 
 ## Manual Deployment
 
@@ -190,7 +182,6 @@ Before release:
 - Email Provider, email confirmation, Auth Site URL, and Redirect URLs configured.
 - The Before User Created Hook is bound and common/unsupported registration domains behave as expected.
 - Vercel Development, Preview, and Production variables all reviewed.
-- GitHub environment secrets available.
 - Quality and E2E checks pass.
 - Preview and Production point to different Supabase projects.
 - Preview account is read-only.

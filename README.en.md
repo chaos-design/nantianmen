@@ -74,7 +74,7 @@ For exact scripts, environment variables, branch flow, testing strategy, and tro
 
 The project uses Vercel to host the Next.js application, Supabase for Auth, PostgreSQL, and private Storage, and the Vercel Git integration as the deployment entry. Pushing to a linked repository triggers a deployment: `main` builds to Production, other branches and pull requests build Preview Deployments. Build commands come from `vercel.json` in the repository root, and the Node version comes from `engines` in `package.json`.
 
-GitHub Actions provides the quality gate (Biome, TypeScript, Vitest, Playwright) plus the auditable build archive and Release. The two channels have separate responsibilities.
+GitHub Actions provides the quality gate (Biome, TypeScript, Vitest, Playwright). Deployment does not rely on Vercel credentials stored in GitHub; it is handled by Vercel's own Git integration.
 
 Prepare three environments before deployment: development for local integration, test for Vercel Preview and acceptance, and production for real users. Each environment should use a separate Supabase project. Preview and Production must not share service role keys, databases, or Storage.
 

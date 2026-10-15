@@ -71,7 +71,8 @@ icloud.com / me.com / yahoo.com / proton.me / protonmail.com
 
 项目使用 Vercel 托管 Next.js 应用，使用 Supabase 提供 Auth、PostgreSQL 和私有 Storage。推送代码到 Vercel 已关联的 Git 仓库即触发自动部署：`main` 部署到 Production，其他分支和 PR 生成 Preview Deployment。构建命令由仓库根目录的 `vercel.json` 固定，Node 版本由 `package.json` 的 `engines` 声明。
 
-GitHub Actions 负责质量门禁（Biome、TypeScript、Vitest、Playwright）和可审计的构建归档与 Release，两条通道职责分离。
+GitHub Actions 负责质量门禁（Biome、TypeScript、Vitest、Playwright）。部署不依赖
+GitHub 侧保存的 Vercel 凭据，由 Vercel 自己的 Git 集成完成。
 
 部署前需要准备三类环境：开发环境用于本地联调，测试环境用于 Vercel Preview 和集成验证，生产环境用于真实用户流量。三个环境应使用不同 Supabase 项目，Preview 和 Production 不共享 service role key、数据库或 Storage。
 

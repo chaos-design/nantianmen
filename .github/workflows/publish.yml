@@ -5,22 +5,16 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      target:
-        description: Vercel environment to deploy
-        required: true
-        default: preview
-        type: choice
-        options:
-          - preview
-          - production
 
 permissions:
   contents: read
 
 concurrency:
-  group: publish-${{ github.event_name == 'push' && 'production' || inputs.target }}
+  group: publish-${{ github.ref }}
   cancel-in-progress: false
+
+# 部署由 Vercel Git 集成完成，不依赖 Vercel CLI 凭据。本工作流只作为
+# `main` 合并后的质量门禁：quality 和 e2e 全部通过才视为可发布。
 
 jobs:
   quality:
@@ -93,168 +87,3 @@ jobs:
             test-results/
           if-no-files-found: ignore
           retention-days: 7
-
-  deploy:
-    name: deploy
-    needs:
-      - quality
-      - e2e
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
-    environment:
-      name: ${{ (github.event_name == 'push' || inputs.target == 'production') && 'production' || 'preview' }}
-      url: ${{ steps.deploy.outputs.url }}
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - name: Install project dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Validate Vercel CLI
-        run: |
-          pnpm dlx vercel@latest --version
-
-      - name: Resolve release metadata
-        id: release
-        env:
-          REQUESTED_TARGET: ${{ inputs.target }}
-        run: |
-          set -euo pipefail
-
-          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
-            target="production"
-          else
-            target="$REQUESTED_TARGET"
-          fi
-
-          if [[ "$target" == "production" && "$GITHUB_REF" != "refs/heads/main" ]]; then
-            echo "::error::Production deployments are only allowed from main."
-            exit 1
-          fi
-
-          if [[ "$target" == "production" ]]; then
-            base_version="$(node -p "require('./package.json').version.split('.').slice(0, 2).join('.')")"
-            if [[ ! "$base_version" =~ ^[0-9]+\.[0-9]+$ ]]; then
-              echo "::error::package.json must contain a numeric major.minor version."
-              exit 1
-            fi
-            version="v${base_version}.${GITHUB_RUN_NUMBER}"
-          else
-            version="preview-${GITHUB_RUN_NUMBER}"
-          fi
-
-          archive="${version}-vercel-output.tar.gz"
-          echo "target=$target" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "archive=$archive" >> "$GITHUB_OUTPUT"
-
-      - name: Validate Vercel credentials
-        run: |
-          set -euo pipefail
-          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "::error::Missing required secret: $name"
-              exit 1
-            fi
-          done
-
-      - name: Pull Vercel environment
-        run: |
-          pnpm dlx vercel@latest pull \
-            --yes \
-            --environment="${{ steps.release.outputs.target }}" \
-            --token="$VERCEL_TOKEN"
-
-      - name: Build Vercel output
-        env:
-          TARGET: ${{ steps.release.outputs.target }}
-        run: |
-          set -euo pipefail
-          if [[ "$TARGET" == "production" ]]; then
-            pnpm dlx vercel@latest build --prod --token="$VERCEL_TOKEN"
-          else
-            pnpm dlx vercel@latest build --token="$VERCEL_TOKEN"
-          fi
-
-      - name: Package Vercel output
-        env:
-          ARCHIVE: ${{ steps.release.outputs.archive }}
-        run: tar -czf "$ARCHIVE" .vercel/output
-
-      - name: Upload versioned build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.release.outputs.version }}-vercel-output-attempt-${{ github.run_attempt }}
-          path: ${{ steps.release.outputs.archive }}
-          if-no-files-found: error
-          retention-days: 30
-
-      - name: Deploy prebuilt output
-        id: deploy
-        env:
-          TARGET: ${{ steps.release.outputs.target }}
-        run: |
-          set -euo pipefail
-          if [[ "$TARGET" == "production" ]]; then
-            deployment_url="$(pnpm dlx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN")"
-          else
-            deployment_url="$(pnpm dlx vercel@latest deploy --prebuilt --token="$VERCEL_TOKEN")"
-          fi
-
-          deployment_url="$(printf '%s\n' "$deployment_url" | tail -n 1)"
-          if [[ ! "$deployment_url" =~ ^https:// ]]; then
-            echo "::error::Vercel did not return a valid deployment URL."
-            exit 1
-          fi
-          echo "url=$deployment_url" >> "$GITHUB_OUTPUT"
-
-      - name: Write deployment summary
-        env:
-          TARGET: ${{ steps.release.outputs.target }}
-          VERSION: ${{ steps.release.outputs.version }}
-          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
-        run: |
-          {
-            echo "## Vercel deployment"
-            echo
-            echo "| Item | Value |"
-            echo "| --- | --- |"
-            echo "| Environment | \`$TARGET\` |"
-            echo "| Version | \`$VERSION\` |"
-            echo "| URL | $DEPLOYMENT_URL |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Create GitHub release
-        if: steps.release.outputs.target == 'production'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.release.outputs.version }}
-          ARCHIVE: ${{ steps.release.outputs.archive }}
-        run: |
-          set -euo pipefail
-          if gh release view "$VERSION" >/dev/null 2>&1; then
-            gh release upload "$VERSION" "$ARCHIVE" --clobber
-          else
-            gh release create "$VERSION" "$ARCHIVE#Vercel Build Output" \
-              --target "$GITHUB_SHA" \
-              --title "$VERSION" \
-              --generate-notes
-          fi
