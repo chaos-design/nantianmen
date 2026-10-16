@@ -1,6 +1,6 @@
 "use client"
 
-import { type RefObject, useLayoutEffect } from "react"
+import { type RefObject, useLayoutEffect, useRef } from "react"
 import type {
   WebTemplateId,
   WebTemplateScheme,
@@ -26,14 +26,26 @@ export function useWebResumeLayout({
   composition,
   activeSectionId,
 }: UseWebResumeLayoutOptions): void {
+  const firstEntryRef = useRef(true)
   useLayoutEffect(() => {
     const root = rootRef.current
     if (!root) {
       return
     }
 
-    root.dataset.templateReady = "false"
     root.dataset.templateMotion = templateId
+    const isInitialEntry = firstEntryRef.current
+    firstEntryRef.current = false
+    // 首次进入时内容已由服务端 HTML 直接可见：不隐藏、不重播入场动画，
+    // 避免水合后重新编排造成的闪烁并保住 LCP；仅模板切换才重新编排。
+    if (isInitialEntry) {
+      root.dataset.templateReady = "true"
+      delete root.dataset.templateAnimate
+      return
+    }
+
+    root.dataset.templateAnimate = "true"
+    root.dataset.templateReady = "false"
     let readyFrameId: number | null = null
     const prepareFrameId = requestAnimationFrame(() => {
       readyFrameId = requestAnimationFrame(() => {
@@ -46,6 +58,7 @@ export function useWebResumeLayout({
       if (readyFrameId !== null) {
         cancelAnimationFrame(readyFrameId)
       }
+      delete root.dataset.templateAnimate
     }
   }, [rootRef, templateId])
 

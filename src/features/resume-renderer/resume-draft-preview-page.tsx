@@ -6,6 +6,7 @@ import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
 import { ScrollArea } from "../../components/ui/scroll-area"
+import type { EditableResume } from "../../server/domain/resume-service"
 import { DraftResumeRouteFallback, useDraftResumeLoader } from "./draft-resume-loader"
 import { ResumePageContent, StaticResumeImageLayer } from "./resume-page"
 import { paginateResumeDocument } from "./resume-pagination"
@@ -13,6 +14,9 @@ import { paginateResumeDocument } from "./resume-pagination"
 interface ResumeDraftPreviewPageProps {
   resumeId: string
   readOnly?: boolean
+  /** 服务端取齐的初始草稿；存在时跳过客户端拉取瀑布。 */
+  initialResume?: EditableResume
+  initialError?: string
 }
 
 function calculatePreviewScale(width: number, height: number): number {
@@ -27,8 +31,15 @@ function calculatePreviewScale(width: number, height: number): number {
 export function ResumeDraftPreviewPage({
   resumeId,
   readOnly = false,
+  initialResume,
+  initialError,
 }: ResumeDraftPreviewPageProps) {
-  const { resume, assetUrls, error } = useDraftResumeLoader(resumeId)
+  const { resume, assetUrls, error } = useDraftResumeLoader(
+    resumeId,
+    true,
+    initialResume ?? null,
+    initialError ?? null,
+  )
   const stageRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.72)
   const pages = useMemo(

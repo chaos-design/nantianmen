@@ -95,7 +95,7 @@ vercel.json                 Vercel 构建声明，固定 framework 和 install/b
 
 | 依赖 | 使用场景 |
 | --- | --- |
-| GitHub CLI | 配置分支保护或维护 GitHub Release |
+| GitHub CLI | 配置分支保护 |
 | Vercel CLI | 本地验证 Vercel Build Output 或手动发布 |
 | Supabase CLI 和 Docker | 需要运行 Supabase 本地服务时使用 |
 
@@ -682,8 +682,8 @@ CI 的 quality job 在 `pnpm build` 之后执行它。
 ## 12. 安全基线
 
 - 应用密钥只保存在本地 `.env` 或 Vercel Environment Variables。
-- GitHub Secrets 仅保存 `VERCEL_TOKEN`、`VERCEL_ORG_ID` 和 `VERCEL_PROJECT_ID`
-  等发布基础设施凭据。
+- GitHub 不保存任何 Vercel 凭据：构建和部署由 Vercel Git 集成（GitHub App）
+  完成，GitHub Actions 只运行质量门禁。
 - `NEXT_PUBLIC_` 变量会进入浏览器构建，只能存放公开配置。
 - service role 只在 Next.js 服务端使用。
 - 日志、截图、测试 fixture 和 Issue 不得包含真实用户数据。

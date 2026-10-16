@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import "../../styles/auth.css"
 import { Toaster } from "../../components/ui/sonner"
 
 // 找回密码表单通过 toast 反馈「邮件已发送」等状态（见 forgot-password-form），

@@ -60,6 +60,11 @@ export function getPlacementStyle(placement: ResumeImagePlacement): CSSPropertie
   }
 }
 
+/** 公开分享页资源的同源地址；页面预载与图片层共用，避免两处拼写漂移。 */
+export function publicResumeAssetUrl(publicSlug: string, assetId: string): string {
+  return `/api/public-resumes/${encodeURIComponent(publicSlug)}/assets/${encodeURIComponent(assetId)}`
+}
+
 interface StaticResumeImageLayerProps {
   document: ResumeDocument
   pageIndex: number
@@ -86,12 +91,11 @@ export function StaticResumeImageLayer({
         }
         const source =
           assetUrls?.[asset.id] ??
-          (publicSlug
-            ? `/api/public-resumes/${encodeURIComponent(publicSlug)}/assets/${encodeURIComponent(asset.id)}`
-            : "")
+          (publicSlug ? publicResumeAssetUrl(publicSlug, asset.id) : "")
         if (!source) {
           return null
         }
+        // 首页放置图可能成为 LCP 元素：高优先级预取；其余页面不占带宽。
         return (
           // biome-ignore lint/performance/noImgElement: private publication assets are already validated and dimensioned
           <img
@@ -100,6 +104,7 @@ export function StaticResumeImageLayer({
             key={placement.id}
             src={source}
             alt={asset.alt}
+            fetchPriority={pageIndex === 0 ? "high" : "low"}
             style={{
               ...getPlacementStyle(placement),
               objectFit: placement.objectFit,

@@ -176,21 +176,6 @@ export async function deleteResumeAsset(
   }
 }
 
-export async function loadPrivateAssetBlob(
-  resumeId: string,
-  assetId: string,
-  signal?: AbortSignal,
-): Promise<Blob> {
-  const response = await fetch(`/api/resumes/${resumeId}/assets/${assetId}`, {
-    cache: "no-store",
-    signal,
-  })
-  if (!response.ok) {
-    await readApiResponse<never>(response)
-  }
-  return response.blob()
-}
-
 export async function generateAiContent(input: {
   resumeId: string
   task: AiTask

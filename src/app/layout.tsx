@@ -1,7 +1,7 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata } from "next"
 import { TextSelectionShortcuts } from "../components/text-selection-shortcuts"
-import "./globals.css"
+import "../styles/core.css"
 
 export const metadata: Metadata = {
   title: {

@@ -203,7 +203,9 @@ export function SectionNavigation({
         <span>个人信息</span>
       </button>
       <Separator />
+      {/* 稳定 id：让 DndContext 的 DndDescribedBy 在 SSR/客户端一致，避免 hydration 告警 */}
       <DndContext
+        id="resume-section-navigation"
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}

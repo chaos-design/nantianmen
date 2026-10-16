@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { Badge } from "../../components/ui/badge"
 import { Button } from "../../components/ui/button"
 import { copyTextToClipboard } from "../../lib/clipboard"
+import type { EditableResume } from "../../server/domain/resume-service"
 import {
   defaultWebTemplateId,
   getWebTemplateScheme,
@@ -29,6 +30,9 @@ import { WebTemplateThumbnail } from "./web-template-thumbnail"
 interface ResumeWebBuilderPageProps {
   resumeId: string
   readOnly?: boolean
+  /** 服务端取齐的初始草稿；存在时跳过客户端拉取瀑布。 */
+  initialResume?: EditableResume
+  initialError?: string
 }
 
 const templateSidebarCollapsedStorageKey =
@@ -98,8 +102,15 @@ export function persistTemplateSidebarCollapsed(
 export function ResumeWebBuilderPage({
   resumeId,
   readOnly = false,
+  initialResume,
+  initialError,
 }: ResumeWebBuilderPageProps) {
-  const { resume, error } = useDraftResumeLoader(resumeId, false)
+  const { resume, error } = useDraftResumeLoader(
+    resumeId,
+    false,
+    initialResume ?? null,
+    initialError ?? null,
+  )
   const [selectedTemplateId, setSelectedTemplateId] =
     useState<WebTemplateId>(defaultWebTemplateId)
   const [renderedTemplateId, setRenderedTemplateId] =

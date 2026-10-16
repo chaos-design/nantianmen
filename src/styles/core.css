@@ -1,0 +1,1343 @@
+/* core — 所有路由共享：Tailwind、主题变量、基础样式、UI 原语 */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+.legal-shell {
+  min-height: 100svh;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.legal-header {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  border: 0;
+  background: color-mix(in oklab, var(--background) 95%, transparent);
+  box-shadow: 0 14px 38px oklch(0.03 0.015 248 / 42%);
+  backdrop-filter: blur(20px);
+}
+
+.legal-header-inner {
+  display: flex;
+  width: min(100% - 3rem, 68rem);
+  min-height: 4.5rem;
+  margin-inline: auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.legal-nav {
+  display: flex;
+  align-self: stretch;
+  gap: 1.5rem;
+}
+
+.legal-nav a {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted-foreground);
+  font-size: var(--app-type-body-sm);
+  font-weight: 650;
+  letter-spacing: 0;
+  outline: none;
+  transition:
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.legal-nav a:hover,
+.legal-nav a:focus-visible,
+.legal-nav a[aria-current="page"] {
+  color: var(--foreground);
+  box-shadow: inset 0 -2px var(--primary);
+}
+
+.legal-main {
+  width: min(100% - 3rem, 60rem);
+  margin-inline: auto;
+}
+
+.legal-intro {
+  padding-block: 5.5rem 3.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.legal-intro > span,
+.legal-content section > span {
+  color: var(--primary);
+  font-family: var(--font-code);
+  font-size: var(--app-type-caption);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.legal-intro h1 {
+  max-width: 14ch;
+  margin-top: 1rem;
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.legal-intro > p {
+  max-width: 48rem;
+  margin-top: 1.5rem;
+  color: var(--muted-foreground);
+  font-size: var(--app-type-body-lg);
+  line-height: 1.8;
+}
+
+.legal-meta {
+  display: flex;
+  margin-top: 2.5rem;
+  gap: 3rem;
+}
+
+.legal-meta div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.legal-meta dt {
+  color: var(--muted-foreground);
+  font-size: var(--app-type-caption);
+}
+
+.legal-meta dd {
+  font-size: var(--app-type-body-sm);
+  font-weight: 650;
+}
+
+.legal-content section {
+  display: grid;
+  padding-block: 2.75rem;
+  border-bottom: 1px solid var(--border);
+  grid-template-columns: 3rem minmax(0, 1fr);
+  column-gap: 1.5rem;
+}
+
+.legal-content section > span {
+  grid-row: 1 / span 20;
+  padding-top: 0.35rem;
+}
+
+.legal-content h2 {
+  font-family: var(--font-display);
+  font-size: var(--app-type-title-sm);
+  font-weight: 680;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.legal-content p,
+.legal-content ul {
+  grid-column: 2;
+  margin-top: 1rem;
+  color: var(--muted-foreground);
+  font-size: var(--app-type-body);
+  line-height: 1.85;
+}
+
+.legal-content ul {
+  display: grid;
+  padding-left: 1.15rem;
+  gap: 0.65rem;
+  list-style: disc;
+}
+
+.legal-content li::marker {
+  color: var(--primary);
+}
+
+.legal-footer {
+  display: flex;
+  padding-block: 2.5rem 4rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.legal-footer p {
+  max-width: 42rem;
+  color: var(--muted-foreground);
+  font-size: var(--app-type-caption);
+  line-height: 1.7;
+}
+
+.legal-footer a {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--foreground);
+  font-size: var(--app-type-body-sm);
+  font-weight: 650;
+  outline: none;
+  transition: color 180ms ease;
+}
+
+.legal-footer a:hover,
+.legal-footer a:focus-visible {
+  color: var(--primary);
+}
+
+.legal-footer svg {
+  width: 1rem;
+}
+
+@media (max-width: 700px) {
+  .legal-header-inner,
+  .legal-main {
+    width: min(100% - 2rem, 60rem);
+  }
+  .legal-header-inner {
+    min-height: 4rem;
+    gap: 1rem;
+  }
+  .legal-nav {
+    gap: 1rem;
+  }
+  .legal-intro {
+    padding-block: 3.5rem 2.5rem;
+  }
+  .legal-intro h1 {
+    font-size: 2.5rem;
+  }
+  .legal-meta {
+    gap: 1.5rem;
+  }
+  .legal-content section {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+  .legal-content section > span,
+  .legal-content p,
+  .legal-content ul {
+    grid-row: auto;
+    grid-column: 1;
+  }
+  .legal-content p,
+  .legal-content ul {
+    margin-top: 0.4rem;
+  }
+  .legal-footer {
+    flex-direction: column;
+  }
+}
+
+/* 全局公告轮播槽位：登录后展示在页首，关闭状态由浏览器本地记录。 */ /* * 公告条按级别取一个强调色，背景、描边、图标、级别徽标和翻页点全部由它派生， * 避免每个属性各写一份 color-mix 后逐渐对不上。 * * 级别与色相的对应按语义固定：通知=蓝、消息=青绿、提醒=黄、重要=红。 * 之前提醒用的是 --chart-4（品红），和「提醒」的直觉完全相反。 */ .announcement-carousel {
+  --announcement-accent: var(--chart-2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px clamp(20px, 4vw, 64px);
+  border-bottom: 1px solid
+    color-mix(in oklab, var(--announcement-accent) 40%, var(--border));
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--announcement-accent) 26%, var(--background)),
+    color-mix(in oklab, var(--announcement-accent) 11%, var(--background)) 64%,
+    var(--background)
+  );
+  color: var(--foreground);
+  font-size: 0.85rem;
+}
+
+.announcement-carousel[data-level="info"] {
+  --announcement-accent: var(--chart-2);
+}
+
+.announcement-carousel[data-level="success"] {
+  --announcement-accent: var(--chart-1);
+}
+
+.announcement-carousel[data-level="warning"] {
+  --announcement-accent: var(--chart-3);
+}
+
+.announcement-carousel[data-level="danger"] {
+  --announcement-accent: var(--chart-5);
+}
+
+.announcement-carousel-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  /* 强调色直接用实测只有 4.4:1（danger 级红），与徽标文字同样提亮后才过 4.5:1。 */
+  color: color-mix(in oklab, var(--announcement-accent) 58%, var(--foreground));
+}
+
+.announcement-carousel-level {
+  flex-shrink: 0;
+  border: 1px solid color-mix(in oklab, var(--announcement-accent) 52%, transparent);
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: color-mix(in oklab, var(--announcement-accent) 18%, transparent);
+  color: color-mix(in oklab, var(--announcement-accent) 58%, var(--foreground));
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.announcement-carousel-body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.announcement-carousel-body strong {
+  font-weight: 600;
+}
+
+.announcement-carousel-body span {
+  color: color-mix(in oklab, var(--foreground) 72%, var(--muted-foreground));
+}
+
+.announcement-carousel-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  color: color-mix(in oklab, var(--announcement-accent) 45%, var(--foreground));
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.announcement-carousel-link:hover {
+  text-decoration: underline;
+}
+
+.announcement-carousel-dots {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.announcement-carousel-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  border: 0;
+  padding: 0;
+  background: color-mix(in oklab, var(--announcement-accent) 45%, transparent);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.announcement-carousel-dot[aria-current="true"] {
+  background: var(--announcement-accent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--announcement-accent) 28%, transparent);
+}
+
+@media (max-width: 720px) {
+  .announcement-carousel {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .announcement-carousel-body {
+    flex-basis: 100%;
+    order: 3;
+  }
+}
+
+/* 管理员公告配置抽屉。 */ .announcement-admin-sheet {
+  width: min(34rem, 100vw);
+  max-width: min(34rem, 100vw);
+  gap: 0;
+}
+
+.announcement-admin-sheet [data-slot="sheet-header"] {
+  border-bottom: 1px solid var(--border);
+  padding: 18px 20px 14px;
+  padding-right: 3rem;
+}
+
+.announcement-admin-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding: 18px 20px 24px;
+}
+
+.announcement-admin-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 面板体是动态 chunk，首次打开时才下载，期间必须说清在做什么。 */ .announcement-admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.announcement-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.announcement-admin-empty {
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+}
+
+.announcement-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.announcement-admin-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.announcement-admin-item-head {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.announcement-admin-item-head strong {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 列表里只需要看清公告写了什么，不该把 240 字全文铺开占满抽屉。 */ .announcement-admin-item-body {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.announcement-admin-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.announcement-admin-item-meta > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.76rem;
+}
+
+.announcement-admin-item-meta dt {
+  color: var(--muted-foreground);
+}
+
+.announcement-admin-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 阻断保存的原因必须写出来，不能只把按钮置灰。 */ .announcement-admin-issue {
+  margin-right: auto;
+  color: var(--destructive);
+  font-size: 0.8rem;
+}
+
+.announcement-admin-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 表单按类别分组，分组之间用分隔线而不是靠空白猜边界。 */ .announcement-admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.announcement-admin-section + .announcement-admin-section {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.announcement-admin-section > header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.announcement-admin-section > header h3 {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.announcement-admin-section > header p {
+  min-width: 0;
+  flex: 1;
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+/* * 标签列固定宽度、控件列自适应： * 标签右对齐贴住同一条基线，控件左边缘连成一条直线，跨分组也保持同一列宽。 * 说明文字落在第二行的控件列下，不占标签列，因此不会把控件挤歪。 */ .announcement-admin-rows {
+  --announcement-admin-label-width: 5rem;
+  display: grid;
+  grid-template-columns: var(--announcement-admin-label-width) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px 12px;
+}
+
+/* 每行用 subgrid 继承外层列宽，标签列因此不必在每行重复声明宽度。 */ .announcement-admin-row {
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  grid-column: 1 / -1;
+  min-inline-size: 0;
+}
+
+.announcement-admin-row > [data-slot="field-label"] {
+  grid-column: 1;
+}
+
+.announcement-admin-row > [data-slot="field-description"] {
+  grid-column: 2;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.announcement-admin-row[data-invalid="true"] > [data-slot="field-label"] {
+  color: var(--destructive);
+}
+
+/* 开关比输入框矮，补一层与输入框同高的容器，开关才能和相邻控件对齐。 */ .announcement-admin-switch {
+  display: flex;
+  height: var(--control-md);
+  align-items: center;
+}
+
+.announcement-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+/* 时间选择器触发按钮与 Input 同高，否则同一行会出现台阶。 */ .announcement-time-trigger {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-md);
+  justify-content: flex-start;
+  gap: 0.4rem;
+  padding-inline: 0.75rem;
+  font-weight: 400;
+}
+
+.announcement-time-popover {
+  display: flex;
+  width: auto;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* * 日历展开后有 350px 以上，叠上时段选择会顶满整块抽屉。 * 限高并内部滚动：滚动条只在这个容器里，不会连带翻动抽屉正文。 */ .announcement-time-calendar {
+  max-height: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.announcement-time-slots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* * 时段下拉的候选项有 24 个，每项 32px，自然高度 776px，不限高会整条铺开， * 盖住日历和「今天 09:00」。这里加一道 12rem 的硬上限。 * * `!important` 不是偷懒，是绕不开的：Radix 的 SelectItemAlignedPosition * 给内容容器写死了行内样式 `max-height: 100%`（见 @radix-ui/react-select * 源码 `SelectItemAlignedPosition`），而行内样式压过一切作者规则， * 普通 class 无论顺序还是 @layer 都赢不了。`!important` 是作者样式里 * 唯一能压过行内样式的手段。 * * 顺带记录两条被实测推翻的写法，避免以后重蹈： * * 1. shadcn 自带的 `max-h-(--radix-select-content-available-height)` 在本项目 * 无效：默认 `position="item-aligned"` 下 Radix 不设这个变量（实测取到空串）， * 无 fallback 的 var() 会让声明在 computed-value 阶段失效。 * 2. 改写成 `min(12rem, var(..., 100%))` 同样无效：容器高度不确定时百分比 * max-height 不参与约束，computed 仍报 "100%"，渲染高度仍是 557px。 * * 12rem 远小于任何视口高度，不存在顶出屏幕的风险，因此不需要 available-height * 兜底，也就不必跟着那个无效变量写 min()。 */ .announcement-time-select-content {
+  /* biome-ignore lint/complexity/noImportantStyles: Radix writes max-height as inline style, only !important can win */
+  max-height: 12rem !important;
+}
+
+.announcement-time-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+}
+
+:root {
+  --font-ui: "Avenir Next", "Segoe UI", "PingFang SC", sans-serif;
+  --font-display: "Iowan Old Style", "Songti SC", Georgia, serif;
+  --font-code: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --radius: 0.55rem;
+  --control-xs: 1.5rem;
+  --control-sm: 2rem;
+  --control-md: 2.25rem;
+  --control-lg: 2.5rem;
+  --control-icon-xs: 1.5rem;
+  --control-icon-sm: 2rem;
+  --control-icon-md: 2.25rem;
+  --control-icon-lg: 2.5rem;
+  --app-type-caption: 0.68rem;
+  --app-type-label: 0.75rem;
+  --app-type-body-sm: 0.82rem;
+  --app-type-body: 0.9rem;
+  --app-type-body-lg: 1.08rem;
+  --app-type-title-sm: 1.5rem;
+  --app-type-title: 2rem;
+  --app-type-hero: clamp(3.6rem, 5.6vw, 6.7rem);
+  --app-space-1: 0.25rem;
+  --app-space-1-5: 0.375rem;
+  --app-space-2: 0.5rem;
+  --app-space-3: 0.75rem;
+  --app-space-4: 1rem;
+  --app-space-6: 1.5rem;
+  --app-space-8: 2rem;
+  --app-space-12: 3rem;
+  --toast-max-width: 26rem;
+  --app-shadow-panel: 0 12px 35px rgb(0 0 0 / 24%);
+  --app-shadow-elevated: 0 18px 50px oklch(0.04 0.02 248 / 0.5);
+  --app-shadow-floating: 0 30px 90px rgb(0 0 0 / 28%);
+  --background: oklch(0.14 0.018 248);
+  --foreground: oklch(0.95 0.012 205);
+  --card: oklch(0.18 0.018 248);
+  --card-foreground: oklch(0.95 0.012 205);
+  --popover: oklch(0.19 0.02 248);
+  --popover-foreground: oklch(0.95 0.012 205);
+  --primary: oklch(0.78 0.14 172);
+  --primary-foreground: oklch(0.13 0.03 205);
+  --secondary: oklch(0.23 0.024 245);
+  --secondary-foreground: oklch(0.92 0.014 205);
+  --muted: oklch(0.22 0.018 248);
+  --muted-foreground: oklch(0.7 0.025 225);
+  --accent: oklch(0.26 0.035 190);
+  --accent-foreground: oklch(0.96 0.018 175);
+  --destructive: oklch(0.63 0.2 25);
+  --border: oklch(0.31 0.025 245);
+  --input: oklch(0.31 0.025 245);
+  --ring: oklch(0.72 0.12 172);
+  --chart-1: oklch(0.78 0.14 172);
+  --chart-2: oklch(0.69 0.13 225);
+  --chart-3: oklch(0.73 0.14 75);
+  --chart-4: oklch(0.67 0.17 330);
+  --chart-5: oklch(0.65 0.14 25);
+  --sidebar: oklch(0.16 0.018 248);
+  --sidebar-foreground: oklch(0.94 0.012 205);
+  --sidebar-primary: oklch(0.78 0.14 172);
+  --sidebar-primary-foreground: oklch(0.13 0.03 205);
+  --sidebar-accent: oklch(0.23 0.03 190);
+  --sidebar-accent-foreground: oklch(0.96 0.018 175);
+  --sidebar-border: oklch(0.29 0.023 245);
+  --sidebar-ring: oklch(0.72 0.12 172);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    background: var(--background);
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-width: 320px;
+    font-family: var(--font-ui);
+  }
+  button,
+  a,
+  input,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  :where(
+      area[href],
+      summary,
+      label[for],
+      label:has(
+          input:is(
+              [type="checkbox"],
+              [type="radio"],
+              [type="file"],
+              [type="color"]
+            ):not(:disabled)
+        ),
+      select:not(:disabled),
+      input:is(
+          [type="button"],
+          [type="submit"],
+          [type="reset"],
+          [type="checkbox"],
+          [type="radio"],
+          [type="file"],
+          [type="color"],
+          [type="range"],
+          [type="image"]
+        ):not(:disabled),
+      [role="button"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="link"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="tab"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="menuitem"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="menuitemcheckbox"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="menuitemradio"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="option"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="switch"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="checkbox"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="radio"]:not([aria-disabled="true"]):not([data-disabled]),
+      [role="combobox"]:not([aria-disabled="true"]):not([data-disabled]),
+      [tabindex]:not([tabindex="-1"]):not([aria-disabled="true"]):not([data-disabled]),
+      [onclick]:not([aria-disabled="true"]):not([data-disabled])
+    ) {
+    cursor: pointer;
+  }
+  ::selection {
+    color: var(--primary-foreground);
+    background: var(--primary);
+  }
+}
+
+a[href]:not([aria-disabled="true"]):not([data-disabled]),
+a[href]:not([aria-disabled="true"]):not([data-disabled]) * {
+  /* biome-ignore lint/complexity/noImportantStyles: keep interactive cursor above host and utility styles */
+  cursor: pointer !important;
+}
+
+[disabled],
+[disabled] *,
+[aria-disabled="true"],
+[aria-disabled="true"] *,
+[data-disabled],
+[data-disabled] * {
+  /* biome-ignore lint/complexity/noImportantStyles: disabled feedback must override interactive cursor */
+  cursor: not-allowed !important;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--foreground);
+  font-size: var(--app-type-body);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.brand-mark > span:first-child {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--primary) 55%, transparent);
+  border-radius: 0.45rem;
+  color: var(--primary);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--primary) 15%, transparent),
+      transparent
+    ), var(--card);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.brand-mark-compact > span:first-child {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.resource-library {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.resource-library-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.resource-card {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  padding: 0.35rem;
+  background: color-mix(in oklab, var(--card) 78%, transparent);
+}
+
+.resource-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.resource-thumbnail {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--muted-foreground);
+  background:
+    linear-gradient(45deg, var(--muted) 25%, transparent 25%) 0 0 / 0.8rem 0.8rem,
+    linear-gradient(-45deg, var(--muted) 25%, transparent 25%) 0 0 / 0.8rem 0.8rem,
+    var(--background);
+}
+
+.resource-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resource-thumbnail svg {
+  width: 1rem;
+}
+
+.resource-card-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.resource-card-copy strong {
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-card-copy small {
+  color: var(--muted-foreground);
+  font-family: var(--font-code);
+  font-size: 0.58rem;
+}
+
+.resource-empty {
+  min-height: 7rem;
+  border: 1px dashed var(--border);
+}
+
+.resource-page-warning {
+  border: 1px solid color-mix(in oklab, var(--primary) 38%, var(--border));
+  border-radius: var(--radius);
+  padding: 0.65rem;
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--primary) 9%, transparent);
+}
+
+.resource-shape-group {
+  width: 100%;
+}
+
+.resource-shape-group [data-slot="toggle-group-item"] {
+  flex: 1;
+}
+
+.resource-layer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.style-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.style-number-control,
+.style-color-control {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.style-number-control > span {
+  min-width: 1.4rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-code);
+  font-size: 0.62rem;
+}
+
+.style-color-control > input[type="color"] {
+  width: 2.5rem;
+  flex: 0 0 auto;
+  padding: 0.2rem;
+}
+
+.style-template-current {
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding-top: 0.25rem;
+}
+
+.style-template-current > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.style-template-current strong,
+.style-template-current small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.style-template-current strong {
+  font-size: 0.72rem;
+}
+
+.style-template-current small {
+  color: var(--muted-foreground);
+  font-size: 0.58rem;
+}
+
+.style-template-current [data-slot="button"] svg {
+  transition: transform 160ms ease;
+}
+
+.style-template-current [data-slot="button"][data-state="open"] svg {
+  transform: rotate(180deg);
+}
+
+.style-template-library {
+  border-top: 1px solid var(--border);
+  padding-top: 0.9rem;
+}
+
+.style-template-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.style-template-option {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.45rem 0.55rem;
+  color: var(--muted-foreground);
+  text-align: left;
+  background: color-mix(in oklab, var(--card) 80%, transparent);
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.style-template-option:hover {
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.style-template-option[data-selected="true"] {
+  border-color: color-mix(in oklab, var(--primary) 55%, var(--border));
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--primary) 11%, var(--card));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 24%, transparent);
+}
+
+.style-template-option strong {
+  width: 100%;
+  overflow: hidden;
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.style-template-option small {
+  width: 100%;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.55rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.style-template-option-check {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  padding: 0.15rem;
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.style-preset-group {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.style-preset-group [data-slot="toggle-group-item"] {
+  width: 100%;
+}
+
+.not-found-shell {
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.not-found-shell {
+  display: grid;
+  place-items: center;
+}
+
+.public-a4-pages {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.public-a4-page {
+  width: 794px;
+  height: 1123px;
+  overflow: hidden;
+  background: white;
+  box-shadow: var(--app-shadow-floating);
+}
+
+.template-tech {
+  color: #d6e4e1;
+  background:
+    linear-gradient(90deg, rgb(39 214 169 / 5%) 1px, transparent 1px),
+    linear-gradient(rgb(39 214 169 / 5%) 1px, transparent 1px), #071317;
+  background-size: 24px 24px;
+  font-family: "SFMono-Regular", Consolas, "PingFang SC", monospace;
+}
+
+.template-classic {
+  padding-inline: 82px;
+  color: #2a241e;
+  background: #fffdf8;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+  box-shadow:
+    inset 0 0 0 8px #fffdf8,
+    inset 0 0 0 9px color-mix(in srgb, var(--resume-accent) 45%, #d6cdbf),
+    0 30px 90px rgb(0 0 0 / 28%);
+}
+
+.template-creative {
+  --resume-sidebar-fill-width: 220px;
+  padding: 0;
+  color: #222831;
+  background: #fbfaf7;
+}
+
+.template-executive {
+  padding-inline: calc(var(--resume-page-margin) + 12px);
+  background:
+    linear-gradient(90deg, var(--resume-accent) 0 8px, transparent 8px),
+    var(--resume-background);
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+}
+
+.template-editorial {
+  --resume-sidebar-fill: var(--resume-accent);
+  --resume-sidebar-fill-width: 190px;
+  padding: 0;
+  background: var(--resume-background);
+}
+
+.template-compact {
+  --resume-section-gap: 14px;
+  padding-block: calc(var(--resume-page-margin) * 0.75);
+  font-family: "SFMono-Regular", Consolas, "PingFang SC", monospace;
+}
+
+.template-academic {
+  color: #241f1a;
+  background: var(--resume-background);
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+}
+
+.template-clean-sidebar {
+  --resume-sidebar-fill: color-mix(
+    in srgb,
+    var(--resume-accent) 10%,
+    var(--resume-background)
+  );
+  --resume-sidebar-fill-width: 210px;
+  padding: 0;
+  background: var(--resume-background);
+}
+
+.template-bold-product {
+  --resume-sidebar-fill: #111619;
+  --resume-sidebar-fill-width: 230px;
+  padding: 0;
+  background: var(--resume-background);
+}
+
+.template-finance {
+  color: #17213a;
+  background: linear-gradient(180deg, #14213d 0 14px, transparent 14px), #fcfbf7;
+  font-family: "Gill Sans", "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-legal {
+  padding-inline: calc(var(--resume-page-margin) + 10px);
+  color: #2b2220;
+  background: linear-gradient(90deg, #7a2832 0 5px, transparent 5px), #fffdf8;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+}
+
+.template-clinical {
+  color: #16383c;
+  background:
+    radial-gradient(circle at 92% 7%, rgb(43 138 145 / 10%), transparent 180px), #f9fdfd;
+  font-family: "Gill Sans", "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-growth {
+  --resume-sidebar-fill: #20242b;
+  --resume-sidebar-fill-width: 220px;
+  padding: 0;
+  color: #20242b;
+  background: #fffdf9;
+}
+
+.template-portfolio {
+  --resume-sidebar-fill:
+    linear-gradient(150deg, rgb(255 255 255 / 12%), transparent 42%), #c6543d;
+  --resume-sidebar-fill-width: 236px;
+  padding: 0;
+  color: #2e2220;
+  background: #fff8f4;
+}
+
+.template-global {
+  color: #243444;
+  background: #fbfcfd;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-civic {
+  color: #292522;
+  background: linear-gradient(180deg, rgb(159 45 40 / 8%), transparent 120px), #fffdf8;
+  font-family: "Songti SC", "Iowan Old Style", Georgia, serif;
+}
+
+.template-one-page {
+  --resume-section-gap: 11px;
+  padding: 42px 52px;
+  color: #202426;
+  background: #ffffff;
+  font-size: calc(var(--resume-font-size) - 1px);
+  line-height: 1.42;
+}
+
+.template-consulting {
+  color: #252a2e;
+  background:
+    linear-gradient(90deg, #c83932 0 9px, transparent 9px),
+    linear-gradient(180deg, #f2f2ef 0 126px, #ffffff 126px);
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-education {
+  color: #313a32;
+  background:
+    radial-gradient(circle at 90% 5%, rgb(84 116 90 / 10%), transparent 180px), #faf7eb;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+}
+
+.template-industrial {
+  --resume-sidebar-fill: #214b70;
+  --resume-sidebar-fill-width: calc(var(--resume-page-margin) + 220px);
+  color: #1e3346;
+  background:
+    linear-gradient(rgb(23 57 92 / 5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(23 57 92 / 5%) 1px, transparent 1px), #f7fafc;
+  background-size: 24px 24px;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-data-lab {
+  --resume-sidebar-fill:
+    radial-gradient(circle at 20% 8%, rgb(78 217 194 / 18%), transparent 150px), #101b27;
+  --resume-sidebar-fill-width: calc(var(--resume-page-margin) + 230px);
+  color: #263646;
+  background: #f6f9fb;
+  font-family: "SFMono-Regular", Consolas, "PingFang SC", monospace;
+}
+
+.template-hospitality {
+  color: #453b35;
+  background: linear-gradient(180deg, rgb(158 79 80 / 9%), transparent 155px), #fff8ed;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-luxury {
+  --resume-sidebar-fill: #151515;
+  --resume-sidebar-fill-width: calc(var(--resume-page-margin) + 220px);
+  color: #292724;
+  background: #fdfcf9;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+}
+
+.web-preview-maximize-exit {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 30;
+  border: 1px solid color-mix(in oklab, var(--primary) 36%, var(--border));
+  box-shadow: 0 12px 36px rgb(0 0 0 / 30%);
+}
+
+@media (max-width: 700px) {
+  .style-control-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Toast 宽度跟随内容，超过最大宽度后换行。 选择器需要比 sonner 内置样式更高特异性，因为它在运行时注入到 head 末尾。 */ [data-sonner-toaster][data-sonner-theme] {
+  width: min(var(--toast-max-width), calc(100vw - 2rem));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  width: max-content;
+  max-width: 100%;
+  white-space: normal;
+}
+
+[data-sonner-toaster][data-x-position="center"]
+  [data-sonner-toast][data-styled="true"] {
+  right: auto;
+  left: 50%;
+  translate: -50% 0;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  body {
+    background: white;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .public-a4-page {
+    display: block;
+    width: 210mm;
+    height: 297mm;
+    padding: 0;
+    transform: none;
+  }
+  .public-a4-pages {
+    gap: 0;
+  }
+  .public-a4-page {
+    position: relative;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    box-shadow: none;
+  }
+  .public-a4-page {
+    break-after: page;
+    page-break-after: always;
+  }
+  .public-a4-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}

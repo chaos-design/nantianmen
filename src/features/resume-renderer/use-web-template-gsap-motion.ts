@@ -1,6 +1,5 @@
 "use client"
 
-import { gsap } from "gsap"
 import { type RefObject, useLayoutEffect } from "react"
 import type { WebTemplateId } from "../../shared/resume-template/web-template-schemes"
 import {
@@ -8,6 +7,20 @@ import {
   getWebTemplateScrollMotion,
   type WebTemplateMotionVector,
 } from "./web-template-gsap-motion"
+
+type GsapInstance = typeof import("gsap")["gsap"]
+type GsapContext = ReturnType<GsapInstance["context"]>
+type GsapTween = ReturnType<GsapContext["getTweens"]>
+
+let cachedGsap: Promise<GsapInstance> | null = null
+
+/** GSAP 只服务装饰性动效：按需动态加载，不进入首屏 JS 关键路径。 */
+function loadGsapInstance(): Promise<GsapInstance> {
+  if (!cachedGsap) {
+    cachedGsap = import("gsap").then((module) => module.gsap)
+  }
+  return cachedGsap
+}
 
 interface MotionLayer {
   element: HTMLElement
@@ -78,6 +91,7 @@ function setupScrollMotion(
   stage: HTMLElement,
   templateId: WebTemplateId,
   amplitude: number,
+  gsap: GsapInstance,
 ) {
   const xTo = gsap.quickTo(stage, "x", {
     duration: 0.72,
@@ -143,9 +157,10 @@ export function useWebTemplateGsapMotion(
 
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
     const compactViewportQuery = window.matchMedia("(max-width: 760px)")
-    let context: ReturnType<typeof gsap.context> | null = null
+    let disposed = false
+    let context: GsapContext | null = null
     let scrollMotionCleanup: (() => void) | null = null
-    let visibilityPausedTweens: gsap.core.Tween[] = []
+    let visibilityPausedTweens: GsapTween[] = []
 
     const clearMotion = () => {
       scrollMotionCleanup?.()
@@ -163,7 +178,7 @@ export function useWebTemplateGsapMotion(
       if (document.hidden) {
         visibilityPausedTweens = context
           .getTweens()
-          .filter((tween: gsap.core.Tween) => !tween.paused())
+          .filter((tween: GsapTween) => !tween.paused())
         for (const tween of visibilityPausedTweens) {
           tween.pause()
         }
@@ -177,7 +192,7 @@ export function useWebTemplateGsapMotion(
       root.dataset.gsapPlayback = "running"
     }
 
-    const setupMotion = () => {
+    const setupMotion = (gsap: GsapInstance) => {
       clearMotion()
       const profile = getWebTemplateMotionProfile(templateId)
       root.dataset.gsapFamily = profile.family
@@ -249,6 +264,7 @@ export function useWebTemplateGsapMotion(
               stage,
               templateId,
               amplitude,
+              gsap,
             )
           }
 
@@ -274,14 +290,32 @@ export function useWebTemplateGsapMotion(
       }
     }
 
-    setupMotion()
-    reducedMotionQuery.addEventListener("change", setupMotion)
-    compactViewportQuery.addEventListener("change", setupMotion)
+    const scheduleSetup = () => {
+      void loadGsapInstance()
+        .then((gsap) => {
+          if (!disposed) {
+            setupMotion(gsap)
+          }
+        })
+        .catch(() => {
+          if (disposed) {
+            return
+          }
+          root.dataset.gsapMotion = "fallback"
+          root.dataset.gsapBackground = "static"
+          root.dataset.gsapPlayback = "static"
+        })
+    }
+
+    scheduleSetup()
+    reducedMotionQuery.addEventListener("change", scheduleSetup)
+    compactViewportQuery.addEventListener("change", scheduleSetup)
     document.addEventListener("visibilitychange", syncDocumentVisibility)
 
     return () => {
-      reducedMotionQuery.removeEventListener("change", setupMotion)
-      compactViewportQuery.removeEventListener("change", setupMotion)
+      disposed = true
+      reducedMotionQuery.removeEventListener("change", scheduleSetup)
+      compactViewportQuery.removeEventListener("change", scheduleSetup)
       document.removeEventListener("visibilitychange", syncDocumentVisibility)
       clearMotion()
       delete root.dataset.gsapFamily

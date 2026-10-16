@@ -14,8 +14,7 @@
 ## 1. 部署目标与原则
 
 项目使用 Vercel 托管 Next.js 应用，使用 Supabase 提供 Auth、PostgreSQL 和私有
-Storage。日常部署由 Vercel Git 集成完成，GitHub Actions 负责质量门禁和版本化
-发布归档。
+Storage。日常部署由 Vercel Git 集成完成，GitHub Actions 负责合并前后的质量门禁。
 
 ```mermaid
 flowchart LR
@@ -25,8 +24,7 @@ flowchart LR
   Main --> VercelGit[Vercel Git 集成]
   VercelGit --> Deploy[Vercel Deployment]
   Deploy --> Supabase[(Supabase 生产数据)]
-  Main -.并行.-> Publish[Publish Workflow]
-  Publish --> Artifact[GitHub Artifact + Release]
+  Main -.并行.-> Publish[Publish Workflow 质量门禁]
 ```
 
 两条通道的分工：
@@ -35,12 +33,12 @@ flowchart LR
 | --- | --- | --- |
 | Vercel Git 集成 | `main` 推送 | 实际构建和部署到 Production |
 | Vercel Git 集成 | 分支推送和 PR | 构建 Preview Deployment |
-| `.github/workflows/publish.yml` | `main` 推送或手动 | 质量门禁、可审计构建归档和 GitHub Release |
+| `.github/workflows/publish.yml` | `main` 推送或手动 | 合并后质量门禁（quality 和 e2e） |
 
-两者都会在 `main` 更新时运行，但只产生两个不同的 Deployment：Git 集成部署负责
-线上流量，Publish Workflow 产出的是归档与 Release。若只需要单一部署通道，可以
-在 Vercel Project Settings → Git 中关闭自动部署，或在 GitHub 中停用
-`publish.yml`；不要让两者都承担线上发布职责。
+部署不依赖 GitHub 侧的 Vercel CLI 凭据：Publish Workflow 不再执行 `vercel` CLI
+构建和部署，只运行质量门禁；线上流量全部由 Vercel Git 集成产生，可随时在
+Dashboard 回滚。若某次 `main` 更新需要阻断发布，在 Vercel Dashboard 回滚或暂停
+自动部署，不要让 Publish Workflow 承担线上发布职责。
 
 发布原则：
 
@@ -75,7 +73,6 @@ flowchart LR
 | pnpm | 使用已提交的 `pnpm-lock.yaml` | 安装依赖并保证构建可复现 |
 | Vercel Project | 已创建、已关联 GitHub 仓库 | 托管 Next.js 应用并执行自动部署 |
 | Supabase Project | 各环境独立，且已完成 Schema 初始化 | 提供 Auth、PostgreSQL 和私有 Storage |
-| Vercel 凭据 | 写入 GitHub Environments | 支持 Publish Workflow 归档通道 |
 
 ### 3.2 产物说明
 
@@ -83,18 +80,10 @@ flowchart LR
 | --- | --- | --- |
 | `.next/` | `pnpm build` | 本地 Next.js 生产运行 |
 | Vercel Build | Vercel Git 集成或 `vercel build` | 线上 Deployment |
-| `.vercel/output/` | `vercel build` | Vercel Build Output API 预构建产物 |
-| `vX.Y.N-vercel-output.tar.gz` | Publish Workflow | 可审计的生产构建归档 |
-| GitHub Artifact | Publish Workflow | 保留 30 天的工作流产物 |
-| GitHub Release Asset | Production 发布 | 与版本标签长期关联的构建归档 |
+| `.vercel/output/` | `vercel build` | 本地手动部署时使用的预构建产物 |
 
-生产版本格式为 `v<package-major>.<package-minor>.<github-run-number>`。例如
-`package.json` 为 `0.1.0`、GitHub Actions 运行编号为 42，版本是 `v0.1.42`。
-
-Preview 产物使用 `preview-<github-run-number>`，不创建标签和 Release。
-
-不要修改或重新打包已通过验证的 `.vercel/output/` 后再部署。Artifact、
-Deployment 和 Release 必须来自同一次工作流运行。
+不要修改或重新打包已通过验证的 `.vercel/output/` 后再部署。手动部署时，构建
+和上传必须来自同一次 `vercel build` 产物。
 
 ## 4. Vercel 初始配置
 
@@ -183,7 +172,7 @@ Storage 默认使用初始化脚本创建的私有 `resume-assets` Bucket。全�
 | 通道 | 变量来源 |
 | --- | --- |
 | Vercel Git 自动部署 | 构建时由 Vercel 注入目标 Environment 的配置 |
-| Publish Workflow | `vercel pull` 从 Vercel Project Settings 拉取目标 Environment 配置 |
+| 手动部署（本地 `vercel` CLI） | `vercel pull` 从 Vercel Project Settings 拉取目标 Environment 配置 |
 | 本地开发 | `.env`，由 Next.js 自动加载 |
 
 `NEXT_PUBLIC_*` 决定客户端产物内容。修改后必须重新部署，单纯重启 Function 不生效。
@@ -238,23 +227,12 @@ RLS、权限、认证 Hook、发布函数和 Storage Bucket。所有环境都执
 
 ### 4.4 配置 GitHub
 
-在 GitHub 仓库 Settings → Environments 创建：
+部署通道（Vercel Git 集成）不需要在 GitHub 配置任何 Vercel 凭据：仓库不保存
+`VERCEL_TOKEN` 等密钥，GitHub Actions 只运行质量门禁，构建和部署由 Vercel
+自己的 GitHub App 凭据完成。
 
-- `preview`
-- `production`
-
-在两个 Environment 中配置：
-
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
-
-如果 Preview 和 Production 使用同一个 Vercel Project，`ORG_ID` 和
-`PROJECT_ID` 可以相同，但建议仍在两个 Environment 中显式配置。`VERCEL_TOKEN`
-应属于专用发布身份，并限制到所需 Scope。
-
-`production` Environment 可额外配置 Required Reviewers。这样手动或自动生产发布
-会在部署前等待授权；若要求 `main` 合并后完全无人值守发布，则不要启用该项。
+`production` 的合并审批建议通过分支保护实现（见第 7 章）：要求 `quality` 和
+`e2e` 检查通过、评审批准和线性历史，`main` 合并即自动部署。
 
 ## 5. 自动部署流程
 
@@ -274,36 +252,27 @@ RLS、权限、认证 Hook、发布函数和 Storage Bucket。所有环境都执
 Vercel 的 Preview 构建会使用 Preview Environment 变量。若 Preview 变量缺失，
 构建会在读取 `NEXT_PUBLIC_*` 时失败；此时补齐 Preview 配置并重新部署。
 
-### 5.2 Publish Workflow 归档通道
+### 5.2 Publish Workflow 质量门禁
 
-代码经 Pull Request 合并到 `main` 后，`.github/workflows/publish.yml` 并行运行：
+代码经 Pull Request 合并到 `main` 后，`.github/workflows/publish.yml` 与 Vercel
+Git 集成并行运行：
 
-1. `quality` 运行 Biome、TypeScript 和 Vitest。
+1. `quality` 运行 Biome、TypeScript、Vitest 和覆盖率闸门。
 2. `e2e` 安装 Chromium 并运行 Playwright。
-3. 两项全部通过后拉取 Vercel Production 配置。
-4. 创建 `.vercel/output/` 和版本化归档。
-5. 先上传 GitHub Artifact，再部署同一份预构建产物。
-6. 部署成功后创建 Git 标签和 GitHub Release。
-7. Deployment URL、环境和版本写入 Job Summary。
+3. 两项全部通过，表示本次 `main` 更新通过了合并后质量门禁。
 
-这条通道产出的 Deployment 与 Git 集成产出的 Deployment 相互独立。若只保留 Git
-集成作为线上发布通道，可以在确认归档需求已满足后停用本工作流，避免同一次
-`main` 更新产生两次生产部署。
-
-任何检查、构建、Artifact 上传或部署失败都会阻止后续步骤。Vercel 部署成功但
-Release 创建失败时，工作流仍标记失败；Job Summary 保留 Deployment URL，便于
-补建 Release 或回滚。
+该工作流不执行构建、不上传归档、不创建 GitHub Release，也不需要任何 Vercel
+凭据。部署状态以 Vercel Dashboard → Deployments 为准。
 
 ### 5.3 手动触发
 
 1. 打开 GitHub Actions → **Publish**。
 2. 选择 **Run workflow**。
-3. 选择需要构建的分支。
-4. `target` 选择 `preview` 或 `production`。
-5. 启动并等待 `quality`、`e2e`、`deploy` 完成。
+3. 选择需要检查的分支。
+4. 启动并等待 `quality`、`e2e` 完成。
 
-Production 只允许从 `main` 手动触发。其他分支选择 Production 时，工作流会立即
-失败，防止未评审代码绕过分支保护。
+手动触发只运行质量门禁，不产生部署。生产发布仍由 `main` 合并触发
+Vercel Git 集成完成。
 
 ## 6. 手动部署
 
@@ -412,7 +381,7 @@ GH_TOKEN="$GITHUB_ADMIN_TOKEN" \
 ### 8.1 应用回滚
 
 1. 在 Vercel Dashboard → Deployments 找到最近稳定的 Production Deployment。
-2. 记录当前故障 URL、稳定 URL、GitHub Release 和故障时间。
+2. 记录当前故障 URL、稳定 URL 和故障时间。
 3. 使用 Dashboard 的 Rollback 操作，或执行：
 
 ```bash
@@ -488,8 +457,7 @@ Supabase Dashboard 重点查看：
 2. 本地使用满足 `engines.node` 的 Node.js 执行相同命令。
 3. 检查锁文件是否与 `package.json` 一致，运行 `pnpm install --frozen-lockfile`
    确认没有 lockfile 漂移。
-4. 检查 Vercel 目标 Environment 的变量是否完整。Git 自动部署和 Publish
-   Workflow 使用不同 Environment 配置，两边都要确认。
+4. 检查 Vercel 目标 Environment 的变量是否完整。
 5. `NEXT_PUBLIC_*` 缺失时修复配置并重新部署。
 6. 不通过跳过测试或移除类型检查来恢复发布。
 
@@ -541,7 +509,6 @@ Supabase Dashboard 重点查看：
 
 - GitHub Actions 显示成功。
 - Vercel Production Deployment 状态为 Ready。
-- Git 集成与 Publish Workflow 两条通道都已完成（或已明确停用其中一条）。
 - 正式域名返回成功。
 - 登录、保存、上传、发布和匿名分享冒烟检查通过。
 - Vercel 和 Supabase 未出现新的错误峰值。

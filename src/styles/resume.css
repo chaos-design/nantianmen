@@ -1,0 +1,2474 @@
+/* resume — 简历文档渲染：/r/**、/editor/** 与落地页示例 */
+.a4-canvas {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.75rem;
+  padding: 2rem 2rem 6rem calc(var(--editor-left-coverage) + 2rem);
+  transition:
+    padding-right 180ms ease,
+    padding-left 180ms ease;
+}
+
+.a4-page-wrap {
+  position: relative;
+  width: calc(794px * var(--a4-scale));
+  height: calc(1123px * var(--a4-scale) + 1.8rem);
+  transition:
+    width 90ms linear,
+    height 90ms linear;
+}
+
+.a4-page-label {
+  display: flex;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted-foreground);
+  font-family: var(--font-code);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+}
+
+.a4-page {
+  position: absolute;
+  top: 1.8rem;
+  left: 0;
+  width: 794px;
+  height: 1123px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: white;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 7%),
+    0 28px 80px rgb(0 0 0 / 42%);
+  transform: scale(var(--a4-scale));
+  transform-origin: top left;
+  cursor: pointer;
+  will-change: transform;
+  transition: transform 90ms linear;
+}
+
+.a4-page-wrap[data-selected="true"] .a4-page {
+  box-shadow:
+    0 0 0 2px color-mix(in oklab, var(--primary) 72%, white),
+    0 28px 80px rgb(0 0 0 / 42%);
+}
+
+.resume-page-content {
+  position: relative;
+  width: 794px;
+  height: 1123px;
+  overflow: hidden;
+  background: white;
+}
+
+.a4-page .resume-document {
+  height: 1123px;
+  min-height: 1123px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.resume-image-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.resume-placed-image-static {
+  position: absolute;
+  display: block;
+}
+
+.resume-placed-image,
+.resume-image-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.resume-placed-image {
+  display: block;
+  user-select: none;
+}
+
+.resume-placed-image[data-shape="circle"],
+.resume-image-placement[data-shape="circle"] {
+  border-radius: 999px;
+}
+
+.resume-placed-image[data-shape="rounded"],
+.resume-image-placement[data-shape="rounded"] {
+  border-radius: 18px;
+}
+
+.resume-image-layer-editable {
+  overflow: visible;
+}
+
+.resume-image-placement {
+  position: absolute;
+  overflow: visible;
+  border-radius: 2px;
+  outline: 1px solid transparent;
+  cursor: move;
+  pointer-events: auto;
+  touch-action: none;
+  transition:
+    outline-color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.resume-image-placement > .resume-placed-image,
+.resume-image-placement > .resume-image-placeholder {
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.resume-image-placement[data-selected="true"] {
+  outline: 2px solid var(--resume-accent, #157d72);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 78%);
+}
+
+.resume-image-placeholder {
+  display: grid;
+  place-items: center;
+  color: oklch(0.42 0.02 248);
+  background: oklch(0.92 0.015 248);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.resume-image-placeholder svg {
+  width: 22px;
+}
+
+.resume-image-resize-handle {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 18px;
+  height: 18px;
+  border: 3px solid white;
+  border-radius: 999px;
+  cursor: nwse-resize;
+  background: var(--resume-accent, #157d72);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
+  touch-action: none;
+}
+
+.resume-image-zero-locator {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid white;
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      45deg,
+      transparent 42%,
+      var(--resume-accent, #157d72) 42% 58%,
+      transparent 58%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 42%,
+      var(--resume-accent, #157d72) 42% 58%,
+      transparent 58%
+    );
+  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
+}
+
+.style-template-current > .template-thumbnail {
+  width: 4.75rem;
+}
+
+.template-thumbnail {
+  width: 100%;
+  border: 1px solid color-mix(in oklab, var(--border) 72%, transparent);
+  border-radius: 0.35rem;
+  background: var(--muted);
+}
+
+.template-thumbnail-page {
+  fill: color-mix(in oklab, var(--background) 94%, white);
+}
+
+.template-thumbnail-sidebar {
+  fill: color-mix(in oklab, var(--primary) 18%, var(--muted));
+}
+
+.template-thumbnail-accent,
+.template-thumbnail-avatar {
+  fill: var(--primary);
+}
+
+.template-thumbnail-title {
+  fill: color-mix(in oklab, var(--foreground) 76%, transparent);
+}
+
+.template-thumbnail-copy,
+.template-thumbnail-sidebar-copy {
+  fill: color-mix(in oklab, var(--foreground) 24%, transparent);
+}
+
+.template-thumbnail-rule {
+  fill: color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+
+.public-resume-shell {
+  min-height: 100vh;
+  /* 底部留出空间给悬浮的来源署名栏，避免压住最后一页内容。 */
+  padding-bottom: 5.5rem;
+  background:
+    radial-gradient(circle at 50% 0%, oklch(0.3 0.06 190 / 0.25), transparent 40rem),
+    var(--background);
+}
+
+.public-resume-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  width: min(980px, calc(100% - 2rem));
+  align-items: center;
+  justify-content: space-between;
+  margin-inline: auto;
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.public-resume-toolbar {
+  min-height: 4.5rem;
+}
+
+.public-resume-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-1-5);
+}
+
+.public-resume-stage {
+  width: 794px;
+  min-height: 1123px;
+  margin: 1.5rem auto;
+}
+
+/* 分享页底部来源署名。A4 页跟随浅色主题，Web 页用 tone="dark" 贴合深色底；两者在打印时都由 @media print 隐藏。 */ .public-resume-attribution {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+/* A4 分享页：来源署名固定吸在视口底部，悬浮于内容之上。 背景与顶部的公共工具栏同款半透磨砂，保证被盖住的内容仍可辨认； 内边距把正文对齐收进 min(980px, 100% - 2rem) 的页面栏内。 */ .public-resume-shell
+.public-resume-attribution {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  padding: 0.65rem max(1rem, calc((100% - 980px) / 2));
+  background: color-mix(in oklab, var(--background) 88%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.public-resume-attribution p {
+  margin: 0;
+}
+
+.public-resume-attribution-note {
+  max-width: 46ch;
+}
+
+.public-resume-attribution-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.1rem;
+}
+
+.public-resume-attribution-license {
+  white-space: nowrap;
+}
+
+.public-resume-attribution-repo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--foreground);
+  transition: color 180ms ease;
+}
+
+.public-resume-attribution-repo svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: var(--primary);
+}
+
+.public-resume-attribution-repo:hover {
+  color: var(--primary);
+}
+
+.public-resume-attribution-repo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+
+.public-resume-attribution[data-tone="dark"] {
+  padding: 0.85rem 1rem;
+  background: transparent;
+  color: rgb(255 255 255 / 62%);
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo {
+  color: rgb(255 255 255 / 88%);
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo:hover {
+  color: white;
+}
+
+.public-resume-attribution[data-tone="dark"] .public-resume-attribution-repo svg {
+  color: oklch(0.72 0.15 190);
+}
+
+.public-resume-attribution[data-tone="dark"]
+  .public-resume-attribution-repo:focus-visible {
+  outline-color: rgb(255 255 255 / 55%);
+}
+
+.public-a4-page .resume-document {
+  height: 1123px;
+  min-height: 1123px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.resume-document {
+  --resume-accent: #157d72;
+  --resume-background: #fff;
+  --resume-font-family: "Avenir Next", "PingFang SC", sans-serif;
+  --resume-font-size: 12px;
+  --resume-line-height: 1.65;
+  --resume-muted: color-mix(in srgb, var(--resume-text) 72%, var(--resume-paper));
+  --resume-page-margin: 70px;
+  --resume-paper: var(--resume-background);
+  --resume-rule: color-mix(in srgb, var(--resume-accent) 26%, transparent);
+  --resume-section-gap: 26px;
+  --resume-text: var(--resume-text-color);
+  --resume-text-color: #17201f;
+  width: 794px;
+  min-height: 1123px;
+  padding: var(--resume-page-margin);
+  color: var(--resume-text);
+  background: var(--resume-paper);
+  box-shadow: var(--app-shadow-floating);
+  font-family: var(--resume-font-family);
+  font-size: var(--resume-font-size);
+  line-height: var(--resume-line-height);
+}
+
+.resume-document[data-accent="blue"] {
+  --resume-accent: #214f8f;
+}
+
+.resume-document[data-accent="amber"] {
+  --resume-accent: #9b6218;
+}
+
+.resume-document[data-accent="rose"] {
+  --resume-accent: #9c3c58;
+}
+
+.resume-document[data-density="compact"] {
+  --resume-section-gap: 18px;
+}
+
+.resume-profile {
+  position: relative;
+  padding-bottom: 28px;
+  border-bottom: 2px solid var(--resume-accent);
+  border-radius: 2px;
+  transition:
+    outline-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.resume-profile[data-selected="true"],
+.resume-section[data-selected="true"] {
+  outline: 2px solid color-mix(in srgb, var(--resume-accent) 82%, transparent);
+  outline-offset: 7px;
+  background-color: color-mix(in srgb, var(--resume-accent) 7%, transparent);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--resume-accent) 12%, transparent),
+    0 12px 28px color-mix(in srgb, var(--resume-accent) 12%, transparent);
+}
+
+.resume-profile[data-json-linked="true"],
+.resume-section[data-json-linked="true"],
+.resume-item[data-json-linked="true"],
+.resume-skill-group[data-json-linked="true"] {
+  outline: 3px solid color-mix(in srgb, var(--resume-accent) 86%, white);
+  outline-offset: 6px;
+  border-radius: 3px;
+  background-color: color-mix(in srgb, var(--resume-accent) 11%, transparent);
+  box-shadow:
+    0 0 0 7px color-mix(in srgb, var(--resume-accent) 14%, transparent),
+    0 16px 36px color-mix(in srgb, var(--resume-accent) 18%, transparent);
+  animation: resume-json-link-pulse 420ms ease-out;
+}
+
+.resume-item,
+.resume-skill-group {
+  transition:
+    outline-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.resume-document[data-mode="preview"] .resume-profile,
+.resume-document[data-mode="preview"] .resume-section {
+  cursor: pointer;
+}
+
+.resume-document[data-mode="preview"] .resume-profile::before,
+.resume-document[data-mode="preview"] .resume-section::before {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  border: 1px solid color-mix(in srgb, white 28%, transparent);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: white;
+  background: color-mix(in srgb, var(--resume-accent) 92%, #111827);
+  box-shadow: 0 5px 14px rgb(0 0 0 / 18%);
+  content: "点击编辑";
+  font-family: "PingFang SC", sans-serif;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.resume-document[data-mode="preview"] .resume-profile[data-selected="true"]::before,
+.resume-document[data-mode="preview"] .resume-section[data-selected="true"]::before {
+  content: "正在编辑";
+  opacity: 0;
+  transform: translateY(0);
+}
+
+@media (hover: hover) {
+  .resume-document[data-mode="preview"]
+    .resume-profile:not([data-selected="true"]):hover,
+  .resume-document[data-mode="preview"]
+    .resume-section:not([data-selected="true"]):hover {
+    outline: 2px solid color-mix(in srgb, var(--resume-accent) 66%, transparent);
+    outline-offset: 6px;
+    background-color: color-mix(in srgb, var(--resume-accent) 6%, transparent);
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--resume-accent) 8%, transparent),
+      0 12px 28px color-mix(in srgb, var(--resume-accent) 14%, transparent);
+    transform: translateY(-2px);
+  }
+  .resume-document[data-mode="preview"] .resume-profile:hover::before,
+  .resume-document[data-mode="preview"] .resume-section:hover::before {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+.resume-document[data-mode="preview"] .resume-profile:active,
+.resume-document[data-mode="preview"] .resume-section:active {
+  background-color: color-mix(in srgb, var(--resume-accent) 10%, transparent);
+  transform: translateY(0) scale(0.998);
+}
+
+.resume-kicker {
+  margin-bottom: 8px;
+  color: var(--resume-accent);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.resume-profile h1 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.resume-headline {
+  margin-top: 8px;
+  color: var(--resume-muted);
+  font-size: 14px;
+}
+
+.resume-contact-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 18px;
+  margin-top: 18px;
+}
+
+.resume-contact-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--resume-muted);
+  font-size: 9px;
+  text-decoration: none;
+}
+
+.resume-contact-item svg {
+  width: 10px;
+  height: 10px;
+  color: var(--resume-accent);
+  stroke-width: 1.8;
+}
+
+.resume-summary {
+  max-width: 610px;
+  margin-top: 18px;
+  color: var(--resume-muted);
+  line-height: 1.75;
+}
+
+.resume-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--resume-section-gap);
+  padding-top: 28px;
+}
+
+.resume-section {
+  position: relative;
+  margin-block: var(--section-spacing-before, 0) var(--section-spacing-after, 0);
+  color: var(--section-color, inherit);
+  font-family: var(--section-font-family, inherit);
+  font-size: var(--section-font-size, inherit);
+  border-radius: 2px;
+  transition:
+    outline-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.resume-section > h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  color: var(--resume-accent);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.resume-section > h2::after {
+  height: 1px;
+  flex: 1;
+  background: var(--resume-rule);
+  content: "";
+}
+
+.resume-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.resume-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.resume-item h3,
+.resume-skill-group h3 {
+  margin: 0;
+  color: currentColor;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.resume-item-subtitle {
+  margin-top: 2px;
+  color: var(--resume-accent);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.resume-item-meta {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #6a7472;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+}
+
+.resume-item-description {
+  margin-top: 8px;
+  color: color-mix(in srgb, currentColor 78%, transparent);
+}
+
+.resume-highlight-list {
+  display: flex;
+  margin: 8px 0 0;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0;
+  list-style: none;
+}
+
+.resume-highlight-list li {
+  position: relative;
+  padding-left: 14px;
+}
+
+.resume-highlight-list li::before {
+  position: absolute;
+  top: 0.58em;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border: 1px solid var(--resume-accent);
+  border-radius: 50%;
+  content: "";
+}
+
+.resume-inline-skills,
+.resume-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.resume-inline-skills span,
+.resume-skill-list span {
+  border: 1px solid color-mix(in srgb, var(--resume-accent) 22%, transparent);
+  border-radius: 99px;
+  padding: 2px 7px;
+  color: var(--resume-accent);
+  background: color-mix(in srgb, var(--resume-accent) 5%, transparent);
+  font-size: 8px;
+  font-weight: 600;
+}
+
+.resume-item-link {
+  display: inline-block;
+  margin-top: 7px;
+  color: var(--resume-accent);
+  font-size: 9px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.resume-skill-group + .resume-skill-group {
+  margin-top: 10px;
+}
+
+.resume-section[data-style-preset="compact"] .resume-section-content {
+  gap: 10px;
+}
+
+.resume-section[data-style-preset="compact"] .resume-item-description,
+.resume-section[data-style-preset="compact"] .resume-highlight-list {
+  margin-top: 4px;
+}
+
+.resume-section[data-style-preset="accent"] {
+  border-left: 3px solid var(--resume-accent);
+  padding-left: 16px;
+}
+
+.resume-section[data-style-preset="timeline"] .resume-section-content {
+  position: relative;
+  gap: 14px;
+  padding-left: 18px;
+}
+
+.resume-section[data-style-preset="timeline"] .resume-section-content::before {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 3px;
+  width: 1px;
+  background: color-mix(in srgb, var(--resume-accent) 36%, transparent);
+  content: "";
+}
+
+.resume-section[data-style-preset="timeline"] .resume-item::before {
+  position: absolute;
+  left: -18px;
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border: 1px solid var(--resume-accent);
+  border-radius: 50%;
+  background: var(--resume-background);
+  content: "";
+}
+
+.resume-section[data-style-preset="timeline"] .resume-item {
+  position: relative;
+}
+
+.resume-section[data-style-preset="card"] {
+  border: 1px solid color-mix(in srgb, var(--resume-accent) 22%, transparent);
+  border-radius: 8px;
+  padding: 18px;
+  background: color-mix(in srgb, var(--resume-accent) 4%, transparent);
+}
+
+.template-tech .resume-profile {
+  border-bottom-style: dashed;
+}
+
+.template-tech .resume-profile h1 {
+  color: #f1fbf8;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  font-weight: 700;
+}
+
+.template-tech .resume-headline,
+.template-tech .resume-summary,
+.template-tech .resume-contact-item,
+.template-tech .resume-item-description {
+  color: #9fb4b0;
+}
+
+.template-tech .resume-item h3,
+.template-tech .resume-skill-group h3 {
+  color: #e8f3f0;
+}
+
+.template-tech .resume-item-meta {
+  color: #78928d;
+}
+
+.template-classic .resume-profile {
+  text-align: center;
+  border-bottom: 4px double var(--resume-accent);
+}
+
+.template-classic .resume-kicker {
+  letter-spacing: 0.22em;
+}
+
+.template-classic .resume-profile h1 {
+  font-size: 38px;
+  letter-spacing: 0.02em;
+}
+
+.template-classic .resume-contact-list {
+  justify-content: center;
+}
+
+.template-classic .resume-summary {
+  margin-inline: auto;
+}
+
+.template-classic .resume-section > h2 {
+  justify-content: center;
+  color: #2a241e;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-classic .resume-section > h2::before,
+.template-classic .resume-section > h2::after {
+  width: 42px;
+  flex: 0 0 auto;
+}
+
+.resume-document[data-layout="sidebar"] {
+  position: relative;
+  isolation: isolate;
+}
+
+.resume-document[data-layout="sidebar"]::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  width: var(--resume-sidebar-fill-width, 0px);
+  background: var(--resume-sidebar-fill, transparent);
+  content: "";
+  pointer-events: none;
+}
+
+.resume-document[data-layout="sidebar"] > .resume-profile,
+.resume-document[data-layout="sidebar"] > .resume-split-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.template-creative .resume-profile {
+  padding: 62px 62px 38px 260px;
+  border: 0;
+  background: linear-gradient(
+    120deg,
+    #fbfaf7 65%,
+    color-mix(in srgb, var(--resume-accent) 8%, white)
+  );
+}
+
+.template-creative .resume-profile h1 {
+  font-size: 40px;
+}
+
+.template-creative .resume-contact-list {
+  display: none;
+}
+
+.resume-split-layout {
+  display: grid;
+  min-height: 840px;
+  grid-template-columns: 220px 1fr;
+}
+
+.template-creative .resume-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin-top: -226px;
+  padding: 64px 30px;
+  color: white;
+  background: var(--resume-sidebar-fill);
+}
+
+.template-creative .resume-sidebar::before {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 96px;
+  border: 1px solid rgb(255 255 255 / 48%);
+  border-radius: 50%;
+  content: "RL";
+  display: grid;
+  place-items: center;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: 24px;
+}
+
+.template-creative .resume-main {
+  padding: 34px 56px 60px;
+}
+
+.template-executive .resume-profile {
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent) 42%, transparent);
+  padding-bottom: 34px;
+}
+
+.template-executive .resume-profile h1 {
+  max-width: 520px;
+  font-size: 48px;
+  line-height: 0.96;
+}
+
+.template-executive .resume-headline {
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.template-executive .resume-section > h2 {
+  color: currentColor;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+}
+
+.template-editorial .resume-profile {
+  padding: 56px 54px 34px 236px;
+  border: 0;
+}
+
+.template-editorial .resume-profile h1 {
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  font-size: 46px;
+  font-weight: 800;
+}
+
+.template-editorial .resume-contact-list {
+  display: none;
+}
+
+.template-editorial .resume-split-layout {
+  grid-template-columns: 190px 1fr;
+}
+
+.template-editorial .resume-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: -214px;
+  padding: 56px 24px;
+  color: white;
+  background: var(--resume-accent);
+}
+
+.template-editorial .resume-sidebar::before {
+  margin-bottom: 105px;
+  font-family: var(--font-code);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  content: "PROFILE / 01";
+}
+
+.template-editorial .resume-sidebar .resume-section > h2,
+.template-editorial .resume-sidebar .resume-skill-group h3,
+.template-editorial .resume-sidebar .resume-skill-list span {
+  color: white;
+}
+
+.template-editorial .resume-main {
+  padding: 34px 54px 56px;
+}
+
+.template-editorial .resume-section > h2 {
+  font-size: 9px;
+}
+
+.template-compact .resume-profile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 24px;
+  padding-bottom: 18px;
+  border-bottom-width: 1px;
+}
+
+.template-compact .resume-profile h1 {
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  font-size: 34px;
+  font-weight: 750;
+}
+
+.template-compact .resume-contact-list {
+  max-width: 260px;
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+.template-compact .resume-summary {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
+.template-compact .resume-main {
+  padding-top: 18px;
+}
+
+.template-compact .resume-section-content {
+  gap: 11px;
+}
+
+.template-academic .resume-profile {
+  text-align: center;
+  border-bottom: 1px solid #241f1a;
+}
+
+.template-academic .resume-profile h1 {
+  font-size: 34px;
+  letter-spacing: 0.03em;
+}
+
+.template-academic .resume-contact-list {
+  justify-content: center;
+}
+
+.template-academic .resume-summary {
+  margin-inline: auto;
+  font-style: italic;
+}
+
+.template-academic .resume-section > h2 {
+  color: #241f1a;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.template-academic .resume-section > h2::after {
+  background: #241f1a;
+}
+
+.template-clean-sidebar .resume-profile {
+  padding: 58px 58px 36px 250px;
+  border: 0;
+}
+
+.template-clean-sidebar .resume-contact-list {
+  display: none;
+}
+
+.template-clean-sidebar .resume-split-layout {
+  grid-template-columns: 210px 1fr;
+}
+
+.template-clean-sidebar .resume-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: -220px;
+  padding: 58px 28px;
+  color: var(--resume-text-color);
+  background: color-mix(in srgb, var(--resume-accent) 10%, var(--resume-background));
+}
+
+.template-clean-sidebar .resume-sidebar::before {
+  height: 118px;
+  margin-bottom: 70px;
+  border-bottom: 1px solid color-mix(in srgb, var(--resume-accent) 30%, transparent);
+  content: "";
+}
+
+.template-clean-sidebar .resume-main {
+  padding: 34px 54px 58px;
+}
+
+.template-bold-product .resume-profile {
+  min-height: 250px;
+  padding: 56px 56px 42px 274px;
+  border: 0;
+}
+
+.template-bold-product .resume-profile h1 {
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  font-size: 52px;
+  font-weight: 850;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+}
+
+.template-bold-product .resume-contact-list {
+  display: none;
+}
+
+.template-bold-product .resume-split-layout {
+  grid-template-columns: 230px 1fr;
+}
+
+.template-bold-product .resume-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin-top: -250px;
+  padding: 54px 28px;
+  color: white;
+  background: #111619;
+}
+
+.template-bold-product .resume-sidebar::before {
+  display: grid;
+  width: 84px;
+  height: 84px;
+  margin-bottom: 110px;
+  place-items: center;
+  color: #111619;
+  background: var(--resume-accent);
+  font-family: var(--font-display);
+  font-size: 32px;
+  content: "P";
+}
+
+.template-bold-product .resume-sidebar .resume-section > h2,
+.template-bold-product .resume-sidebar .resume-skill-group h3,
+.template-bold-product .resume-sidebar .resume-skill-list span {
+  color: white;
+}
+
+.template-bold-product .resume-main {
+  padding: 34px 56px 60px;
+}
+
+.template-finance .resume-profile {
+  position: relative;
+  border-bottom: 1px solid #b8954a;
+  padding-bottom: 30px;
+}
+
+.template-finance .resume-profile::after {
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  width: 92px;
+  height: 7px;
+  background: #b8954a;
+  content: "";
+}
+
+.template-finance .resume-profile h1 {
+  color: #14213d;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: 43px;
+  letter-spacing: -0.025em;
+}
+
+.template-finance .resume-kicker,
+.template-finance .resume-section > h2 {
+  color: #8d6c2d;
+}
+
+.template-finance .resume-section > h2 {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+}
+
+.template-finance .resume-item {
+  border-bottom: 1px solid rgb(20 33 61 / 10%);
+  padding-bottom: 13px;
+}
+
+.template-finance .resume-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.template-legal .resume-profile {
+  text-align: center;
+  border-top: 1px solid #7a2832;
+  border-bottom: 3px double #7a2832;
+  padding-block: 24px 30px;
+}
+
+.template-legal .resume-profile h1 {
+  font-size: 38px;
+  letter-spacing: 0.04em;
+}
+
+.template-legal .resume-contact-list {
+  justify-content: center;
+}
+
+.template-legal .resume-main {
+  counter-reset: legal-section;
+}
+
+.template-legal .resume-section {
+  counter-increment: legal-section;
+}
+
+.template-legal .resume-section > h2 {
+  color: #2b2220;
+  letter-spacing: 0.08em;
+}
+
+.template-legal .resume-section > h2::before {
+  min-width: 24px;
+  color: #7a2832;
+  font-family: "Iowan Old Style", Georgia, serif;
+  font-size: 12px;
+  content: counter(legal-section, decimal-leading-zero) ".";
+}
+
+.template-clinical .resume-profile {
+  border-bottom: 1px solid rgb(43 138 145 / 28%);
+}
+
+.template-clinical .resume-profile h1 {
+  color: #175e65;
+  font-size: 39px;
+  font-weight: 650;
+}
+
+.template-clinical .resume-kicker {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #176b71;
+  background: rgb(43 138 145 / 10%);
+  letter-spacing: 0.12em;
+}
+
+.template-clinical .resume-section > h2 {
+  color: #176b71;
+  letter-spacing: 0.14em;
+}
+
+.template-clinical .resume-section > h2::after {
+  background: rgb(43 138 145 / 22%);
+}
+
+.template-clinical .resume-skill-list span {
+  border-color: rgb(43 138 145 / 20%);
+  color: #175e65;
+  background: rgb(43 138 145 / 7%);
+}
+
+.template-growth .resume-profile {
+  min-height: 232px;
+  padding: 54px 54px 36px 270px;
+  border: 0;
+  background:
+    linear-gradient(115deg, transparent 72%, rgb(242 107 56 / 12%) 72%), #fffdf9;
+}
+
+.template-growth .resume-profile h1 {
+  font-size: 46px;
+  font-weight: 850;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+}
+
+.template-growth .resume-contact-list {
+  display: none;
+}
+
+.template-growth .resume-split-layout {
+  grid-template-columns: 220px 1fr;
+}
+
+.template-growth .resume-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: -232px;
+  padding: 52px 26px;
+  color: white;
+  background: #20242b;
+}
+
+.template-growth .resume-sidebar::before {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 84px;
+  place-items: center;
+  border-radius: 50%;
+  color: #20242b;
+  background: #f26b38;
+  font-family: var(--font-code);
+  font-size: 22px;
+  font-weight: 800;
+  content: "+%";
+}
+
+.template-growth .resume-sidebar .resume-section > h2,
+.template-growth .resume-sidebar .resume-skill-group h3,
+.template-growth .resume-sidebar .resume-skill-list span {
+  color: white;
+}
+
+.template-growth .resume-main {
+  padding: 32px 52px 56px;
+}
+
+.template-growth .resume-section > h2 {
+  color: #d84f1d;
+}
+
+.template-portfolio .resume-profile {
+  min-height: 260px;
+  padding: 58px 54px 38px 282px;
+  border: 0;
+}
+
+.template-portfolio .resume-profile h1 {
+  max-width: 430px;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+  font-size: 54px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 0.88;
+  letter-spacing: -0.05em;
+}
+
+.template-portfolio .resume-contact-list {
+  display: none;
+}
+
+.template-portfolio .resume-split-layout {
+  grid-template-columns: 236px 1fr;
+}
+
+.template-portfolio .resume-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: -260px;
+  padding: 56px 28px;
+  color: white;
+  background: linear-gradient(150deg, rgb(255 255 255 / 12%), transparent 42%), #c6543d;
+}
+
+.template-portfolio .resume-sidebar::before {
+  height: 124px;
+  margin-bottom: 64px;
+  border: 1px solid rgb(255 255 255 / 40%);
+  content: "";
+}
+
+.template-portfolio .resume-sidebar .resume-section > h2,
+.template-portfolio .resume-sidebar .resume-skill-group h3,
+.template-portfolio .resume-sidebar .resume-skill-list span {
+  color: white;
+}
+
+.template-portfolio .resume-main {
+  padding: 28px 50px 58px;
+}
+
+.template-portfolio .resume-section > h2 {
+  color: #a33d2a;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.template-global .resume-profile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 28px;
+  border-top: 6px solid #385a7c;
+  border-bottom: 1px solid #aebdca;
+  padding-top: 26px;
+}
+
+.template-global .resume-profile h1 {
+  color: #20384e;
+  font-size: 39px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.template-global .resume-contact-list {
+  max-width: 280px;
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+.template-global .resume-summary {
+  grid-column: 1 / -1;
+}
+
+.template-global .resume-section > h2 {
+  color: #385a7c;
+  letter-spacing: 0.12em;
+}
+
+.template-civic .resume-profile {
+  text-align: center;
+  border-top: 2px solid #9f2d28;
+  border-bottom: 1px solid #9f2d28;
+  padding-block: 26px 30px;
+}
+
+.template-civic .resume-profile h1 {
+  font-size: 37px;
+  letter-spacing: 0.12em;
+}
+
+.template-civic .resume-contact-list {
+  justify-content: center;
+}
+
+.template-civic .resume-section > h2 {
+  justify-content: center;
+  color: #7d2521;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+}
+
+.template-civic .resume-section > h2::before,
+.template-civic .resume-section > h2::after {
+  width: 48px;
+  flex: 0 0 auto;
+  background: rgb(159 45 40 / 34%);
+}
+
+.template-one-page .resume-profile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 22px;
+  border-bottom: 3px solid #111619;
+  padding-bottom: 15px;
+}
+
+.template-one-page .resume-profile h1 {
+  font-size: 32px;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+}
+
+.template-one-page .resume-headline {
+  font-size: 11px;
+}
+
+.template-one-page .resume-contact-list {
+  max-width: 300px;
+  justify-content: flex-end;
+  margin-top: 0;
+  font-size: 9px;
+}
+
+.template-one-page .resume-summary {
+  grid-column: 1 / -1;
+  max-width: none;
+  margin-top: 5px;
+}
+
+.template-one-page .resume-main {
+  gap: 11px;
+  padding-top: 14px;
+}
+
+.template-one-page .resume-section {
+  gap: 6px;
+}
+
+.template-one-page .resume-section > h2 {
+  color: #111619;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+}
+
+.template-one-page .resume-section-content {
+  gap: 8px;
+}
+
+.template-one-page .resume-item {
+  gap: 3px;
+}
+
+.template-consulting .resume-profile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 28px;
+  border-bottom: 1px solid #9fa3a5;
+  padding-bottom: 24px;
+}
+
+.template-consulting .resume-profile h1 {
+  color: #15191c;
+  font-size: 42px;
+  font-weight: 760;
+  letter-spacing: -0.04em;
+}
+
+.template-consulting .resume-kicker {
+  color: #b82f29;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.template-consulting .resume-contact-list {
+  max-width: 280px;
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+.template-consulting .resume-summary {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+.template-consulting .resume-section > h2 {
+  border-bottom: 2px solid #2b3034;
+  color: #22272b;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+
+.template-consulting .resume-section > h2::after {
+  display: none;
+}
+
+.template-consulting .resume-item {
+  border-left: 3px solid #d9dcdd;
+  padding-left: 16px;
+}
+
+.template-education .resume-profile {
+  border-top: 8px solid #55745b;
+  border-bottom: 1px solid #8da291;
+  padding-top: 24px;
+  text-align: center;
+}
+
+.template-education .resume-profile h1 {
+  color: #314b38;
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.template-education .resume-contact-list {
+  justify-content: center;
+}
+
+.template-education .resume-summary {
+  margin-inline: auto;
+}
+
+.template-education .resume-section > h2 {
+  color: #48684f;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  letter-spacing: 0.14em;
+}
+
+.template-education .resume-section > h2::after {
+  background: #a8bca9;
+}
+
+.template-industrial .resume-profile {
+  border-bottom: 5px solid #e5a72d;
+  background: #17395c;
+  margin: calc(var(--resume-page-margin) * -1);
+  margin-bottom: 0;
+  padding: 48px var(--resume-page-margin) 34px;
+  color: white;
+}
+
+.template-industrial .resume-profile h1,
+.template-industrial .resume-kicker,
+.template-industrial .resume-headline,
+.template-industrial .resume-contact-item,
+.template-industrial .resume-summary {
+  color: white;
+}
+
+.template-industrial .resume-split-layout {
+  grid-template-columns: 220px 1fr;
+}
+
+.template-industrial .resume-sidebar {
+  margin-left: calc(var(--resume-page-margin) * -1);
+  padding: 34px 28px 40px var(--resume-page-margin);
+  color: white;
+  background: #214b70;
+}
+
+.template-industrial .resume-sidebar .resume-section > h2,
+.template-industrial .resume-sidebar .resume-skill-group h3,
+.template-industrial .resume-sidebar .resume-skill-list span {
+  color: white;
+}
+
+.template-industrial .resume-main {
+  padding: 34px 0 0 34px;
+}
+
+.template-industrial .resume-section > h2 {
+  color: #17395c;
+  letter-spacing: 0.14em;
+}
+
+.template-data-lab .resume-profile {
+  margin-left: 230px;
+  border-bottom: 1px solid #6ad2c1;
+  padding-left: 34px;
+}
+
+.template-data-lab .resume-profile::after {
+  position: absolute;
+  top: 4px;
+  left: -196px;
+  width: 150px;
+  color: #6ad2c1;
+  content: "PROFILE / DATA";
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.template-data-lab .resume-profile h1 {
+  color: #102a3b;
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  font-size: 39px;
+  font-weight: 780;
+}
+
+.template-data-lab .resume-kicker,
+.template-data-lab .resume-section > h2 {
+  color: #087d72;
+}
+
+.template-data-lab .resume-split-layout {
+  grid-template-columns: 230px 1fr;
+}
+
+.template-data-lab .resume-sidebar {
+  margin-left: calc(var(--resume-page-margin) * -1);
+  padding: 34px 28px 44px var(--resume-page-margin);
+  color: #d9f3ef;
+  background:
+    radial-gradient(circle at 20% 8%, rgb(78 217 194 / 18%), transparent 150px), #101b27;
+}
+
+.template-data-lab .resume-sidebar .resume-section > h2,
+.template-data-lab .resume-sidebar .resume-skill-group h3,
+.template-data-lab .resume-sidebar .resume-skill-list span {
+  color: #d9f3ef;
+}
+
+.template-data-lab .resume-main {
+  padding-left: 34px;
+}
+
+.template-data-lab .resume-skill-list span {
+  border-radius: 2px;
+}
+
+.template-hospitality .resume-profile {
+  border-top: 1px solid #9e4f50;
+  border-bottom: 1px solid #c8a7a0;
+  padding-block: 28px;
+  text-align: center;
+}
+
+.template-hospitality .resume-profile h1 {
+  color: #713b3d;
+  font-family: "Iowan Old Style", "Songti SC", Georgia, serif;
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.template-hospitality .resume-contact-list {
+  justify-content: center;
+}
+
+.template-hospitality .resume-summary {
+  margin-inline: auto;
+}
+
+.template-hospitality .resume-section > h2 {
+  color: #8a4446;
+  letter-spacing: 0.16em;
+}
+
+.template-hospitality .resume-section > h2::after {
+  background: #d7bab0;
+}
+
+.template-luxury .resume-profile {
+  margin-left: 220px;
+  border-bottom: 1px solid #c5a566;
+  padding-left: 38px;
+}
+
+.template-luxury .resume-profile::after {
+  position: absolute;
+  top: 5px;
+  left: -182px;
+  width: 140px;
+  color: #c5a566;
+  content: "PROFILE / MAISON";
+  font-family: "Avenir Next", "PingFang SC", sans-serif;
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.2em;
+}
+
+.template-luxury .resume-profile h1 {
+  color: #151515;
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.template-luxury .resume-split-layout {
+  grid-template-columns: 220px 1fr;
+}
+
+.template-luxury .resume-sidebar {
+  margin-left: calc(var(--resume-page-margin) * -1);
+  padding: 38px 28px 48px var(--resume-page-margin);
+  color: #f7f1e4;
+  background: #151515;
+}
+
+.template-luxury .resume-sidebar .resume-section > h2,
+.template-luxury .resume-sidebar .resume-skill-group h3,
+.template-luxury .resume-sidebar .resume-skill-list span {
+  color: #f7f1e4;
+}
+
+.template-luxury .resume-main {
+  padding-left: 38px;
+}
+
+.template-luxury .resume-section > h2 {
+  color: #9c7a3c;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+
+.resume-document[data-layout="sidebar"] {
+  padding: 0;
+}
+
+.resume-document[data-layout="sidebar"]::before {
+  display: none;
+}
+
+.resume-document[data-layout="sidebar"] .resume-split-layout {
+  display: grid;
+  min-height: 1123px;
+  grid-template-columns: var(--resume-sidebar-width) minmax(0, 1fr);
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar {
+  display: flex;
+  min-width: 0;
+  min-height: 1123px;
+  margin: 0;
+  flex-direction: column;
+  gap: 28px;
+  padding: clamp(42px, var(--resume-page-margin), 64px) 26px;
+  color: var(--resume-sidebar-foreground);
+  background: var(
+    --resume-sidebar-fill,
+    color-mix(in srgb, var(--resume-accent) 12%, var(--resume-background))
+  );
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar::before {
+  display: none;
+}
+
+.resume-document[data-layout="sidebar"] .resume-primary {
+  min-width: 0;
+  padding: var(--resume-page-margin);
+}
+
+.resume-document[data-layout="sidebar"] .resume-profile {
+  min-height: 0;
+  margin: 0;
+  padding: 0 0 28px;
+}
+
+.resume-document[data-layout="sidebar"] .resume-primary .resume-profile::after {
+  display: none;
+}
+
+.resume-document[data-layout="sidebar"] .resume-main {
+  padding: 28px 0 0;
+}
+
+.resume-document[data-profile-visible="false"] .resume-main {
+  padding-top: 0;
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-section > h2,
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-item h3,
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-skill-group h3 {
+  color: var(--resume-sidebar-foreground);
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-section > h2::after {
+  background: color-mix(in srgb, var(--resume-sidebar-foreground) 32%, transparent);
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-item-header {
+  width: 100%;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-item-subtitle,
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-item-link {
+  color: var(--resume-sidebar-highlight);
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-item-meta {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  color: var(--resume-sidebar-muted);
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-item-description,
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-highlight-list {
+  color: var(--resume-sidebar-muted);
+}
+
+.resume-document[data-layout="sidebar"]
+  .resume-sidebar
+  .resume-highlight-list
+  li::before {
+  border-color: color-mix(in srgb, var(--resume-sidebar-highlight) 78%, transparent);
+  background: color-mix(in srgb, var(--resume-sidebar-highlight) 16%, transparent);
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-skill-list span {
+  border-color: color-mix(in srgb, var(--resume-sidebar-highlight) 48%, transparent);
+  color: var(--resume-sidebar-foreground);
+  background: color-mix(in srgb, var(--resume-sidebar-highlight) 14%, transparent);
+}
+
+.resume-document[data-layout="sidebar"] .resume-sidebar .resume-item-link {
+  overflow-wrap: anywhere;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--resume-sidebar-highlight) 56%,
+    transparent
+  );
+}
+
+.resume-document[data-layout="sidebar"]
+  .resume-sidebar
+  .resume-section[data-section-type="certification"]
+  .resume-section-content {
+  gap: 10px;
+}
+
+.resume-document[data-layout="sidebar"]
+  .resume-sidebar
+  .resume-section[data-section-type="certification"]
+  :is(.resume-item-description, .resume-highlight-list, .resume-inline-skills) {
+  margin-top: 3px;
+}
+
+.resume-sidebar-contact {
+  padding-bottom: 22px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--resume-sidebar-foreground) 24%, transparent);
+}
+
+.resume-sidebar-contact > p {
+  margin-bottom: 14px;
+  color: var(--resume-sidebar-highlight);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+}
+
+.resume-document[data-layout="sidebar"]
+  .resume-sidebar
+  .resume-sidebar-contact
+  .resume-contact-list {
+  display: flex;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+}
+
+.resume-document[data-layout="sidebar"]
+  .resume-sidebar
+  .resume-sidebar-contact
+  .resume-contact-item {
+  min-width: 0;
+  align-items: flex-start;
+  color: var(--resume-sidebar-foreground);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.resume-document[data-layout="sidebar"]
+  .resume-sidebar
+  .resume-sidebar-contact
+  .resume-contact-item
+  svg {
+  margin-top: 1px;
+  flex: 0 0 auto;
+  color: var(--resume-sidebar-highlight);
+  opacity: 0.9;
+}
+
+.a4-page-label {
+  color: oklch(0.78 0.025 220);
+}
+
+.a4-page-wrap {
+  transition: none;
+}
+
+.a4-page {
+  transition: none;
+}
+
+.resume-draft-preview-shell {
+  display: grid;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: oklch(0.095 0.014 248);
+}
+
+.resume-preview-toolbar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  min-height: 4.4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--primary) 16%, var(--border));
+  padding: 0.8rem 1rem 0.8rem 1.2rem;
+  background:
+    linear-gradient(90deg, oklch(0.2 0.027 246 / 96%), oklch(0.16 0.02 248 / 96%)),
+    var(--background);
+}
+
+.resume-preview-toolbar > div:first-child {
+  min-width: 0;
+}
+
+.resume-preview-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.resume-preview-title-row > svg {
+  width: 1rem;
+  color: var(--primary);
+}
+
+.resume-preview-title-row h1 {
+  max-width: min(55vw, 720px);
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resume-preview-title-row [data-slot="badge"] {
+  color: oklch(0.82 0.025 210);
+  font-family: var(--font-code);
+  font-size: 0.58rem;
+}
+
+.resume-preview-toolbar > div:first-child > p {
+  margin-top: 0.22rem;
+  color: oklch(0.7 0.025 220);
+  font-size: 0.68rem;
+}
+
+.resume-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.resume-full-preview-stage {
+  height: 100%;
+  min-height: 0;
+  background:
+    linear-gradient(rgb(255 255 255 / 1.2%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 1.2%) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, oklch(0.35 0.065 190 / 18%), transparent 38rem),
+    oklch(0.095 0.014 248);
+  background-size:
+    36px 36px,
+    36px 36px,
+    auto,
+    auto;
+}
+
+.resume-full-preview-pages {
+  display: flex;
+  min-height: 100%;
+  align-items: center;
+  flex-direction: column;
+  gap: 3rem;
+  padding: 2rem 2rem 5rem;
+}
+
+.resume-full-preview-page-wrap {
+  position: relative;
+  width: calc(794px * var(--full-preview-scale));
+  height: calc(1123px * var(--full-preview-scale));
+  flex: 0 0 auto;
+}
+
+.resume-full-preview-page {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 794px;
+  height: 1123px;
+  overflow: hidden;
+  background: white;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 8%),
+    0 32px 90px rgb(0 0 0 / 48%);
+  transform: scale(var(--full-preview-scale));
+  transform-origin: top left;
+}
+
+.resume-full-preview-page .resume-document {
+  height: 1123px;
+  min-height: 1123px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.web-template-thumbnail {
+  --thumbnail-background: #080d15;
+  --thumbnail-surface: #141c28;
+  --thumbnail-text: #eef5f4;
+  --thumbnail-muted: #708381;
+  --thumbnail-accent: #52d8bd;
+  position: relative;
+  display: block;
+  width: 72px;
+  height: 54px;
+  overflow: hidden;
+  border-radius: 0.35rem;
+  background: var(--thumbnail-background);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 10%);
+}
+
+.web-template-thumbnail i {
+  position: absolute;
+  display: block;
+  border-radius: 99px;
+  background: var(--thumbnail-muted);
+}
+
+.web-template-thumbnail-nav {
+  inset: 0 auto 0 0;
+  width: 18px;
+  border-radius: 0;
+  background: var(--thumbnail-surface);
+}
+
+.web-template-thumbnail-title {
+  top: 12px;
+  left: 27px;
+  width: 42px;
+  height: 6px;
+  background: var(--thumbnail-text);
+}
+
+.web-template-thumbnail-copy {
+  top: 24px;
+  left: 27px;
+  width: 32px;
+  height: 3px;
+}
+
+.web-template-thumbnail-media {
+  right: 7px;
+  bottom: 8px;
+  isolation: isolate;
+  width: 31px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 9px 9px 3px 3px;
+  background: var(--thumbnail-accent);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 18%),
+    0 4px 10px rgb(0 0 0 / 16%);
+}
+
+.web-template-thumbnail-media::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(145deg, transparent 45%, rgb(0 0 0 / 24%));
+  content: "";
+  pointer-events: none;
+}
+
+.web-template-thumbnail-media::before {
+  position: absolute;
+  inset: 6px;
+  border: 1px solid color-mix(in srgb, var(--thumbnail-text) 58%, transparent);
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--thumbnail-text) 30%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(circle at 72% 28%, var(--thumbnail-text) 0 2px, transparent 2.5px);
+  content: "";
+}
+
+.web-template-thumbnail-rule {
+  bottom: 13px;
+  left: 27px;
+  width: 22px;
+  height: 2px;
+  background: var(--thumbnail-accent);
+}
+
+.web-template-thumbnail[data-composition="editorial"] .web-template-thumbnail-nav {
+  inset: 0 0 auto;
+  width: auto;
+  height: 7px;
+  border-radius: 0;
+  background: var(--thumbnail-accent);
+}
+
+.web-template-thumbnail[data-composition="editorial"] .web-template-thumbnail-title {
+  left: 9px;
+  width: 54px;
+}
+
+.web-template-thumbnail[data-composition="editorial"] .web-template-thumbnail-copy {
+  left: 9px;
+}
+
+.web-template-thumbnail[data-composition="grid"] {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--thumbnail-muted) 18%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--thumbnail-muted) 18%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 12px 12px;
+}
+
+.web-template-thumbnail[data-composition="grid"] .web-template-thumbnail-nav {
+  width: 7px;
+  background: var(--thumbnail-accent);
+}
+
+.web-template-thumbnail[data-composition="studio"] .web-template-thumbnail-media {
+  top: 7px;
+  right: 7px;
+  bottom: 7px;
+  width: 34px;
+  height: auto;
+  border-radius: 18px 18px 4px 4px;
+}
+
+.web-template-thumbnail[data-composition="studio"] .web-template-thumbnail-title,
+.web-template-thumbnail[data-composition="studio"] .web-template-thumbnail-copy,
+.web-template-thumbnail[data-composition="studio"] .web-template-thumbnail-rule {
+  left: 9px;
+  width: 30px;
+}
+
+.web-template-thumbnail[data-composition="poster"] .web-template-thumbnail-nav {
+  inset: 0 0 auto;
+  width: auto;
+  height: 9px;
+  border-radius: 0;
+  background: var(--thumbnail-accent);
+}
+
+.web-template-thumbnail[data-composition="poster"] .web-template-thumbnail-title {
+  top: 18px;
+  left: 8px;
+  width: 48px;
+  height: 8px;
+  border-radius: 0;
+}
+
+.web-template-thumbnail[data-composition="poster"] .web-template-thumbnail-copy {
+  top: 31px;
+  left: 8px;
+  width: 27px;
+  border-radius: 0;
+}
+
+.web-template-thumbnail[data-composition="poster"] .web-template-thumbnail-media {
+  right: 7px;
+  bottom: 6px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50% 0 50% 50%;
+  transform: rotate(-7deg);
+}
+
+.web-template-thumbnail[data-composition="poster"] .web-template-thumbnail-rule {
+  bottom: 10px;
+  left: 8px;
+  width: 28px;
+  border-radius: 0;
+}
+
+.web-template-thumbnail[data-composition="mosaic"] .web-template-thumbnail-nav {
+  width: 12px;
+  border-radius: 0;
+  background: var(--thumbnail-accent);
+}
+
+.web-template-thumbnail[data-composition="mosaic"] .web-template-thumbnail-title {
+  top: 8px;
+  left: 20px;
+  width: 38px;
+  height: 5px;
+}
+
+.web-template-thumbnail[data-composition="mosaic"] .web-template-thumbnail-copy {
+  top: 18px;
+  left: 20px;
+  width: 24px;
+}
+
+.web-template-thumbnail[data-composition="mosaic"] .web-template-thumbnail-media {
+  right: 7px;
+  bottom: 7px;
+  width: 27px;
+  height: 25px;
+  border-radius: 4px;
+}
+
+.web-template-thumbnail[data-composition="mosaic"] .web-template-thumbnail-rule {
+  bottom: 7px;
+  left: 20px;
+  width: 23px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--thumbnail-surface);
+  box-shadow: inset 0 0 0 1px var(--thumbnail-muted);
+}
+
+.public-web-resume-shell {
+  display: grid;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  /* 底部来源署名占一行，中间滚动区继续用 minmax(0, 1fr) 吃掉剩余高度。 */
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: oklch(0.075 0.016 248);
+}
+
+.public-web-resume-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  width: 100%;
+  min-height: 4.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  padding: 0.72rem 1rem;
+  background: oklch(0.12 0.018 248 / 96%);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 18%);
+  backdrop-filter: blur(18px);
+}
+
+.public-web-resume-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.public-web-resume-shell > .resume-web-page {
+  height: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
+  .web-template-thumbnail {
+    width: 72px;
+  }
+}
+
+@media (max-width: 760px) {
+  .resume-preview-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 0.75rem;
+  }
+  .resume-preview-title-row h1 {
+    max-width: 78vw;
+  }
+  .resume-preview-actions {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .resume-full-preview-pages {
+    padding-inline: 1rem;
+  }
+  .public-web-resume-toolbar {
+    min-height: 3.8rem;
+    padding: 0.6rem;
+  }
+  .public-web-resume-toolbar .brand-mark > span:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .a4-canvas {
+    padding-left: 2rem;
+  }
+  .public-resume-stage {
+    width: 794px;
+    margin-left: 50%;
+    transform: translateX(-50%) scale(0.48);
+    transform-origin: top center;
+  }
+  .public-resume-shell {
+    height: 720px;
+    overflow-x: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-resume-attribution-repo,
+  .a4-page,
+  .a4-page-wrap,
+  .resume-profile,
+  .resume-section,
+  .resume-item,
+  .resume-skill-group {
+    transition: none;
+  }
+  .resume-profile[data-json-linked="true"],
+  .resume-section[data-json-linked="true"],
+  .resume-item[data-json-linked="true"],
+  .resume-skill-group[data-json-linked="true"] {
+    animation: none;
+  }
+}
+
+@media print {
+  .resume-page-content,
+  .resume-page-content *,
+  .resume-document,
+  .resume-document * {
+    visibility: visible;
+  }
+  .resume-preview-toolbar,
+  .public-resume-toolbar,
+  .public-web-resume-toolbar,
+  /* 来源署名只服务网页浏览和导出前的确认，不进入 PDF。 */ .public-resume-attribution {
+    display: none;
+  }
+  .resume-document[data-mode="preview"] .resume-profile::before,
+  .resume-document[data-mode="preview"] .resume-section::before {
+    display: none;
+  }
+  .resume-profile[data-json-linked="true"],
+  .resume-section[data-json-linked="true"],
+  .resume-item[data-json-linked="true"],
+  .resume-skill-group[data-json-linked="true"] {
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .resume-draft-preview-shell,
+  .public-resume-shell,
+  .public-resume-stage {
+    width: 210mm;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+  .resume-document {
+    position: static;
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    box-shadow: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .a4-page-wrap,
+  .a4-page,
+  .resume-page-content,
+  .resume-full-preview-page-wrap,
+  .resume-full-preview-page {
+    display: block;
+    width: 210mm;
+    height: 297mm;
+    padding: 0;
+    transform: none;
+  }
+  /* .a4-canvas 是所有页面的容器，必须放开高度。 把它也压成 297mm 会让多页简历在打印时全部挤进第一页。 */ .a4-canvas {
+    display: block;
+    width: 210mm;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    transform: none;
+  }
+  .a4-canvas,
+  .resume-full-preview-pages {
+    gap: 0;
+  }
+  .a4-page,
+  .resume-full-preview-page {
+    position: relative;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    box-shadow: none;
+  }
+  .a4-page-wrap,
+  .resume-full-preview-page-wrap {
+    break-after: page;
+    page-break-after: always;
+  }
+  .a4-page-wrap:last-child,
+  .resume-full-preview-page-wrap:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  .a4-page-label {
+    display: none;
+  }
+  body[data-print-source="draft-preview"] .resume-draft-preview-shell {
+    position: static;
+    display: block;
+    visibility: visible;
+    width: 210mm;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    border: 0;
+    padding: 0;
+    background: white;
+    box-shadow: none;
+  }
+  body[data-print-source="draft-preview"] .resume-full-preview-stage,
+  body[data-print-source="draft-preview"]
+    .resume-full-preview-stage
+    [data-slot="scroll-area-viewport"],
+  body[data-print-source="draft-preview"] .resume-full-preview-pages {
+    width: 210mm;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    background: white;
+  }
+}

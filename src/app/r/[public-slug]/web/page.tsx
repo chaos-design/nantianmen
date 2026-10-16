@@ -11,6 +11,7 @@ import {
 import { ResumeService } from "../../../../server/domain/resume-service"
 import { getResumeRepository } from "../../../../server/repositories/repository-factory"
 import { resolveWebTemplateId } from "../../../../shared/resume-template/web-template-schemes"
+import "../../../../styles/web-resume.css"
 
 export const dynamic = "force-dynamic"
 

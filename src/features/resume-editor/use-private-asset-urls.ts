@@ -1,78 +1,45 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useMemo } from "react"
 import type { ResumeImageAsset } from "../../shared/resume-schema/resume-schema"
-import { loadPrivateAssetBlob } from "./editor-api"
+
+/**
+ * 私有资源的同源 API 地址。
+ *
+ * 资源接口按会话 Cookie 鉴权，`<img>` 请求天然携带 Cookie，
+ * 因此地址可以在渲染期同步派生：
+ * - SSR 首帧 HTML 直接包含真实 `src`，画布图片不再等待
+ *   「hydrate → fetch → blob → objectURL」的客户端瀑布；
+ * - 响应带 `Cache-Control: private, max-age=3600`，重复打开同一份简历时
+ *   图片直接命中 HTTP 缓存（旧的 blob 方案用 `fetch(cache: "no-store")`
+ *   绕过了这层缓存）。
+ */
+export function privateAssetUrl(resumeId: string, assetId: string): string {
+  return `/api/resumes/${encodeURIComponent(resumeId)}/assets/${encodeURIComponent(assetId)}`
+}
+
+export function buildPrivateAssetUrls(
+  resumeId: string,
+  assets: ResumeImageAsset[],
+): Record<string, string> {
+  return Object.fromEntries(
+    assets.map((asset) => [asset.id, privateAssetUrl(resumeId, asset.id)]),
+  )
+}
 
 export function usePrivateAssetUrls(
   resumeId: string,
   assets: ResumeImageAsset[],
 ): Record<string, string> {
-  const [urls, setUrls] = useState<Record<string, string>>({})
-  const urlsRef = useRef<Record<string, string>>({})
-  const controllersRef = useRef(new Map<string, AbortController>())
-  const activeAssetIdsRef = useRef(new Set(assets.map((asset) => asset.id)))
-  activeAssetIdsRef.current = new Set(assets.map((asset) => asset.id))
   const assetIdsKey = assets.map((asset) => asset.id).join("|")
-
-  useEffect(() => {
-    const activeAssetIds = new Set(assetIdsKey ? assetIdsKey.split("|") : [])
-    let changed = false
-    const nextUrls = { ...urlsRef.current }
-
-    for (const [assetId, url] of Object.entries(nextUrls)) {
-      if (!activeAssetIds.has(assetId)) {
-        URL.revokeObjectURL(url)
-        delete nextUrls[assetId]
-        changed = true
-      }
-    }
-    for (const [assetId, controller] of controllersRef.current) {
-      if (!activeAssetIds.has(assetId)) {
-        controller.abort()
-        controllersRef.current.delete(assetId)
-      }
-    }
-    if (changed) {
-      urlsRef.current = nextUrls
-      setUrls(nextUrls)
-    }
-
-    for (const assetId of activeAssetIds) {
-      if (urlsRef.current[assetId] || controllersRef.current.has(assetId)) {
-        continue
-      }
-      const controller = new AbortController()
-      controllersRef.current.set(assetId, controller)
-      void loadPrivateAssetBlob(resumeId, assetId, controller.signal)
-        .then((blob) => {
-          if (!activeAssetIdsRef.current.has(assetId)) {
-            return
-          }
-          const objectUrl = URL.createObjectURL(blob)
-          urlsRef.current = { ...urlsRef.current, [assetId]: objectUrl }
-          setUrls(urlsRef.current)
-        })
-        .catch(() => undefined)
-        .finally(() => {
-          controllersRef.current.delete(assetId)
-        })
-    }
-  }, [assetIdsKey, resumeId])
-
-  useEffect(
-    () => () => {
-      for (const controller of controllersRef.current.values()) {
-        controller.abort()
-      }
-      controllersRef.current.clear()
-      for (const url of Object.values(urlsRef.current)) {
-        URL.revokeObjectURL(url)
-      }
-      urlsRef.current = {}
-    },
-    [],
+  return useMemo(
+    () =>
+      Object.fromEntries(
+        assetIdsKey
+          .split("|")
+          .filter(Boolean)
+          .map((assetId) => [assetId, privateAssetUrl(resumeId, assetId)]),
+      ),
+    [assetIdsKey, resumeId],
   )
-
-  return urls
 }

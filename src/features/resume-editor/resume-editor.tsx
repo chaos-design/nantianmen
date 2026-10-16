@@ -85,6 +85,10 @@ import { usePrivateAssetUrls } from "./use-private-asset-urls"
 interface ResumeEditorProps {
   resumeId: string
   aiStorageOwnerId: string
+  /** 服务端取齐的初始草稿与资源；存在时跳过客户端加载瀑布。 */
+  initialResume?: EditableResume
+  /** 服务端加载失败原因；存在时直接渲染错误空态。 */
+  initialError?: string
 }
 
 type SaveStatus = "saved" | "unsaved" | "saving" | "error"
@@ -114,16 +118,27 @@ function LoadingEditor() {
   )
 }
 
-export function ResumeEditor({ resumeId, aiStorageOwnerId }: ResumeEditorProps) {
-  const [resume, setResume] = useState<EditableResume | null>(null)
-  const [document, setDocument] = useState<ResumeDocument | null>(null)
+export function ResumeEditor({
+  resumeId,
+  aiStorageOwnerId,
+  initialResume,
+  initialError,
+}: ResumeEditorProps) {
+  const [resume, setResume] = useState<EditableResume | null>(
+    () => initialResume ?? null,
+  )
+  const [document, setDocument] = useState<ResumeDocument | null>(
+    () => initialResume?.document ?? null,
+  )
   const [selectedSectionId, setSelectedSectionId] = useState("profile")
   const [selectedPageIndex, setSelectedPageIndex] = useState(0)
   const [selectedPlacementId, setSelectedPlacementId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved")
-  const [loadError, setLoadError] = useState("")
+  const [loadError, setLoadError] = useState(initialError ?? "")
   const [contentEditorTab, setContentEditorTab] = useState<ContentEditorTab>("form")
-  const [jsonDraft, setJsonDraft] = useState("")
+  const [jsonDraft, setJsonDraft] = useState(() =>
+    initialResume ? JSON.stringify(initialResume.document, null, 2) : "",
+  )
   const [jsonError, setJsonError] = useState("")
   const [jsonLinkedTarget, setJsonLinkedTarget] = useState<ResumeLinkTarget | null>(
     null,
@@ -140,10 +155,12 @@ export function ResumeEditor({ resumeId, aiStorageOwnerId }: ResumeEditorProps) 
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewPanelRef = useRef<HTMLElement>(null)
-  const versionRef = useRef(1)
+  const versionRef = useRef(initialResume?.version ?? 1)
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
-  const lastSavedSerializedRef = useRef("")
-  const documentRef = useRef<ResumeDocument | null>(null)
+  const lastSavedSerializedRef = useRef(
+    initialResume ? JSON.stringify(initialResume.document) : "",
+  )
+  const documentRef = useRef<ResumeDocument | null>(initialResume?.document ?? null)
   const historyRef = useRef<ResumeHistory<ResumeDocument> | null>(null)
   const editorFocusSequenceRef = useRef(0)
   if (!historyRef.current) {
@@ -210,6 +227,9 @@ export function ResumeEditor({ resumeId, aiStorageOwnerId }: ResumeEditorProps) 
   )
 
   useEffect(() => {
+    if (initialResume || initialError) {
+      return
+    }
     void loadResume(resumeId)
       .then(async (loadedResume) => {
         const storedAssets = await listResumeAssets(resumeId).catch(
@@ -242,7 +262,7 @@ export function ResumeEditor({ resumeId, aiStorageOwnerId }: ResumeEditorProps) 
           error instanceof Error ? error.message : "简历加载失败，请稍后重试。",
         )
       })
-  }, [history, resumeId])
+  }, [history, initialError, initialResume, resumeId])
 
   useEffect(() => {
     setSelectedPageIndex((current) => Math.min(Math.max(0, pageCount - 1), current))

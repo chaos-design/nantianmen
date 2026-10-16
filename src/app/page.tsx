@@ -11,6 +11,8 @@ import {
 import { cookies } from "next/headers"
 import Link from "next/link"
 import type { CSSProperties, ReactNode } from "react"
+import "../styles/landing.css"
+import "../styles/resume.css"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import {
