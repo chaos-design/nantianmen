@@ -23,15 +23,20 @@
   border: 0;
   background: transparent;
   box-shadow: 0 0 0 transparent;
-  backdrop-filter: blur(18px);
   transition:
     background 180ms ease,
     box-shadow 180ms ease;
 }
 
+/* 背景模糊只在滚动后启用。
+   未滚动时标题栏背后是本页顶部的平滑渐变，模糊它几乎看不出差别（逐像素比对差异
+   通道 0.000%），却要多一次全宽 backdrop 采样和一个合成图层：4 倍 CPU 节流下
+   首帧实测多花约 300 ms，而本页的 LCP 元素正是首帧里那块标题文字。滚动后背后才是
+   真正的内容，模糊在那一刻才有意义，那时标题栏已经离开首屏，不影响 LCP。 */
 .workspace-header[data-scrolled="true"] {
   background: color-mix(in oklab, var(--background) 94%, transparent);
   box-shadow: 0 16px 28px -24px color-mix(in oklab, var(--foreground) 58%, transparent);
+  backdrop-filter: blur(18px);
 }
 
 .workspace-account,

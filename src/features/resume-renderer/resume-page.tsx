@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react"
+import { withPrivateImageWidth } from "../../shared/resume-image"
 import type { ResumeLinkTarget } from "../../shared/resume-schema/resume-link-target"
 import type {
   ResumeDocument,
@@ -122,11 +123,13 @@ export function StaticResumeImageLayer({
           return null
         }
         // 首页放置图可能成为 LCP 元素：高优先级预取；其余页面不占带宽。
-        // 公开快照再由图片优化器按显示宽度转码，减少它和 CSS/JS 抢带宽的时间。
-        // 宽度为 0 的放置（零尺寸占位）不参与优化，直接下发原图地址。
+        // 公开快照走 Next 图片优化器；私有资源由资源路由自己按 `?w=` 转码。
+        // 两条路都按显示宽度取档，宽度为 0 的占位不参与优化，直接下发原图地址。
         const optimized =
-          publicSlug && placement.width > 0
-            ? publicOptimizedImageUrl(source, placement.width)
+          placement.width > 0
+            ? publicSlug
+              ? publicOptimizedImageUrl(source, placement.width)
+              : withPrivateImageWidth(source, placement.width)
             : null
         return (
           // biome-ignore lint/performance/noImgElement: private publication assets are already validated and dimensioned

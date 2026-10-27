@@ -12,6 +12,7 @@ import {
 } from "react"
 import { preload } from "react-dom"
 import { Badge } from "../../components/ui/badge"
+import { withPrivateImageWidth } from "../../shared/resume-image"
 import type { ResumeLinkTarget } from "../../shared/resume-schema/resume-link-target"
 import type {
   ResumeDocument,
@@ -200,7 +201,10 @@ export function A4Preview({
   for (const placement of getPagePlacements(document, 0, pages.length)) {
     const url = assetUrls[placement.assetId]
     if (url) {
-      preload(url, { as: "image", fetchPriority: "high" })
+      preload(withPrivateImageWidth(url, placement.width), {
+        as: "image",
+        fetchPriority: "high",
+      })
     }
   }
 
@@ -469,7 +473,12 @@ export function A4Preview({
                         // biome-ignore lint/performance/noImgElement: authenticated assets cannot use the Next image optimizer
                         <img
                           className="resume-placed-image"
-                          src={assetUrls[asset.id]}
+                          // 用已提交的 placement.width 而不是拖拽中的瞬时宽度：
+                          // 后者会在一次缩放手势里变出好几个 URL，每帧触发重新下载。
+                          src={withPrivateImageWidth(
+                            assetUrls[asset.id],
+                            placement.width,
+                          )}
                           alt={asset.alt}
                           draggable={false}
                           fetchPriority={index === 0 ? "high" : "auto"}
