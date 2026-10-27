@@ -111,6 +111,7 @@ GitHub 侧保存的 Vercel 凭据，由 Vercel 自己的 Git 集成完成。
 | [AGENTS.md](AGENTS.md)                                                                           | 唯一 AI Coding Agent 规则文件              |
 | [docs/development-guide.md](docs/development-guide.md) / [English](docs/development-guide.en.md) | 本地开发、测试、代码风格和排障                      |
 | [docs/deployment-guide.md](docs/deployment-guide.md) / [English](docs/deployment-guide.en.md)    | Vercel、Supabase、GitHub Actions、发布和回滚 |
+| [docs/performance-lcp.md](docs/performance-lcp.md)                                                | 三个首屏页面的 LCP 测量口径、优化项与前后数据           |
 | [supabase/README.md](supabase/README.md) / [English](supabase/README.en.md)                      | Supabase 初始化脚本说明                     |
 | [LICENSE](LICENSE)                                                                               | Apache License 2.0                   |
 

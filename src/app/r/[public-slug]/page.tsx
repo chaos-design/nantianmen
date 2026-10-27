@@ -7,6 +7,7 @@ import { PublicResumeActions } from "../../../features/resume-renderer/public-re
 import { PublicResumeAttribution } from "../../../features/resume-renderer/public-resume-attribution"
 import {
   getPagePlacements,
+  publicOptimizedImageUrl,
   publicResumeAssetUrl,
   ResumePageContent,
   StaticResumeImageLayer,
@@ -59,6 +60,7 @@ export default async function PublicResumePage({ params }: PublicResumePageProps
 
   // 首页放置图可能成为 LCP 元素：把预载链接写进 <head>，浏览器解析到文档
   // 头部就开始拉取图片，与 CSS 下载并行，不必等 DOM 解析到深处的 <img>。
+  // 预载地址必须和图片层最终用的 URL 一致（同样走图片优化器），否则会多下一份。
   for (const placement of getPagePlacements(document, 0, pages.length)) {
     const asset = document.resources.assets.find(
       (candidate) => candidate.id === placement.assetId,
@@ -66,10 +68,11 @@ export default async function PublicResumePage({ params }: PublicResumePageProps
     if (!asset) {
       continue
     }
-    preload(publicResumeAssetUrl(result.resume.publicSlug, asset.id), {
-      as: "image",
-      fetchPriority: "high",
-    })
+    const source = publicResumeAssetUrl(result.resume.publicSlug, asset.id)
+    preload(
+      placement.width > 0 ? publicOptimizedImageUrl(source, placement.width) : source,
+      { as: "image", fetchPriority: "high" },
+    )
   }
 
   return (
