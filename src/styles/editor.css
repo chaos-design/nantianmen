@@ -1774,3 +1774,253 @@ button:not(:disabled):not([aria-disabled="true"]):not([data-disabled]):not(
     background: white;
   }
 }
+
+/* 资源库与样式面板：只有编辑器渲染。放在 core.css 会让所有路由为首屏付这份 CSS。 */
+.resource-library {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.resource-library-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.resource-card {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  padding: 0.35rem;
+  background: color-mix(in oklab, var(--card) 78%, transparent);
+}
+
+.resource-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.resource-thumbnail {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--muted-foreground);
+  background:
+    linear-gradient(45deg, var(--muted) 25%, transparent 25%) 0 0 / 0.8rem 0.8rem,
+    linear-gradient(-45deg, var(--muted) 25%, transparent 25%) 0 0 / 0.8rem 0.8rem,
+    var(--background);
+}
+
+.resource-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.resource-thumbnail svg {
+  width: 1rem;
+}
+
+.resource-card-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.resource-card-copy strong {
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-card-copy small {
+  color: var(--muted-foreground);
+  font-family: var(--font-code);
+  font-size: 0.58rem;
+}
+
+.resource-empty {
+  min-height: 7rem;
+  border: 1px dashed var(--border);
+}
+
+.resource-page-warning {
+  border: 1px solid color-mix(in oklab, var(--primary) 38%, var(--border));
+  border-radius: var(--radius);
+  padding: 0.65rem;
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--primary) 9%, transparent);
+}
+
+.resource-shape-group {
+  width: 100%;
+}
+
+.resource-shape-group [data-slot="toggle-group-item"] {
+  flex: 1;
+}
+
+.resource-layer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.style-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.style-number-control,
+.style-color-control {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.style-number-control > span {
+  min-width: 1.4rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-code);
+  font-size: 0.62rem;
+}
+
+.style-color-control > input[type="color"] {
+  width: 2.5rem;
+  flex: 0 0 auto;
+  padding: 0.2rem;
+}
+
+.style-template-current {
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding-top: 0.25rem;
+}
+
+.style-template-current > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.style-template-current strong,
+.style-template-current small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.style-template-current strong {
+  font-size: 0.72rem;
+}
+
+.style-template-current small {
+  color: var(--muted-foreground);
+  font-size: 0.58rem;
+}
+
+.style-template-current [data-slot="button"] svg {
+  transition: transform 160ms ease;
+}
+
+.style-template-current [data-slot="button"][data-state="open"] svg {
+  transform: rotate(180deg);
+}
+
+.style-template-library {
+  border-top: 1px solid var(--border);
+  padding-top: 0.9rem;
+}
+
+.style-template-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.style-template-option {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.45rem 0.55rem;
+  color: var(--muted-foreground);
+  text-align: left;
+  background: color-mix(in oklab, var(--card) 80%, transparent);
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.style-template-option:hover {
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.style-template-option[data-selected="true"] {
+  border-color: color-mix(in oklab, var(--primary) 55%, var(--border));
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--primary) 11%, var(--card));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 24%, transparent);
+}
+
+.style-template-option strong {
+  width: 100%;
+  overflow: hidden;
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.style-template-option small {
+  width: 100%;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.55rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.style-template-option-check {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  padding: 0.15rem;
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.style-preset-group {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.style-preset-group [data-slot="toggle-group-item"] {
+  width: 100%;
+}

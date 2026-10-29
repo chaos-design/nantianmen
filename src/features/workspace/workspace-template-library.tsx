@@ -3,7 +3,6 @@
 import { CheckIcon, FilePlus2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { toast } from "sonner"
 import { Button } from "../../components/ui/button"
 import {
   Dialog,
@@ -14,6 +13,7 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog"
 import { Spinner } from "../../components/ui/spinner"
+import { notifyError } from "../../lib/notify"
 import { maximumMemberResumeCount } from "../../shared/resume-schema/resume-policy"
 import type { ResumeTemplateId } from "../../shared/resume-schema/resume-schema"
 import { templateSchemes } from "../../shared/resume-template/template-schemes"
@@ -56,7 +56,7 @@ function WorkspaceTemplateSelector({
       const result = await createResume(selectedTemplate.id)
       router.push(`/editor/${result.resume.id}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "创建简历失败")
+      notifyError(error instanceof Error ? error.message : "创建简历失败")
       updateCreating(false)
     }
   }
