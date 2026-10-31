@@ -11,7 +11,6 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useDeferredValue, useMemo, useState } from "react"
-import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,14 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu"
 import { Input } from "../../components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../components/ui/select"
 import { Spinner } from "../../components/ui/spinner"
+import { notifyError, notifySuccess } from "../../lib/notify"
 import type { ResumeListItem as ResumeListItemData } from "../../server/domain/resume-service"
 import type { ResumeTemplateId } from "../../shared/resume-schema/resume-schema"
 import { templateSchemes } from "../../shared/resume-template/template-schemes"
@@ -204,10 +197,10 @@ export function WorkspaceResumeLibrary({
     try {
       const deletedCount = await deleteResumes(resumeIds)
       removeResumes(resumeIds)
-      toast.success(`已删除 ${deletedCount} 份简历`)
+      notifySuccess(`已删除 ${deletedCount} 份简历`)
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "批量删除简历失败")
+      notifyError(error instanceof Error ? error.message : "批量删除简历失败")
     } finally {
       setIsDeleting(false)
     }
@@ -297,22 +290,25 @@ export function WorkspaceResumeLibrary({
               className="workspace-filter-trigger-wrap"
               data-clearable={hasPublicationFilter}
             >
-              <Select
+              {/* 原生 select：三个固定选项不需要把整套 Radix Select 拉进首屏
+                  （22 kB 脚本 + 一份 popper 样式），外观由 workspace.css 对齐。 */}
+              <select
+                className="workspace-filter-select"
+                aria-label="按发布状态筛选"
                 value={publicationFilter}
-                onValueChange={(value) => {
-                  setPublicationFilter(value as WorkspacePublicationFilter)
+                onChange={(event) => {
+                  setPublicationFilter(event.target.value as WorkspacePublicationFilter)
                   clearSelection()
                 }}
               >
-                <SelectTrigger aria-label="按发布状态筛选">
-                  <SelectValue placeholder="全部状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">全部状态</SelectItem>
-                  <SelectItem value="published">已发布</SelectItem>
-                  <SelectItem value="draft">草稿</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="all">全部状态</option>
+                <option value="published">已发布</option>
+                <option value="draft">草稿</option>
+              </select>
+              <ChevronDownIcon
+                className="workspace-filter-chevron"
+                aria-hidden="true"
+              />
               {hasPublicationFilter ? (
                 <button
                   className="workspace-filter-clear"

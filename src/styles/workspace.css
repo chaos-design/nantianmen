@@ -400,6 +400,38 @@
   background: color-mix(in oklab, var(--card) 62%, transparent);
 }
 
+/* 发布状态筛选走原生 select：外观与 Radix 触发器保持一致，但不引入 popper。 */
+.workspace-filter-select {
+  min-width: 128px;
+  height: 2.5rem;
+  padding: 0 2.25rem 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  background: color-mix(in oklab, var(--card) 62%, transparent);
+  appearance: none;
+  cursor: pointer;
+}
+
+.workspace-filter-select:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--ring) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.workspace-filter-trigger-wrap > .workspace-filter-chevron {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.5;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: opacity 160ms ease;
+}
+
 .workspace-template-filter-trigger[data-slot="button"] {
   min-width: 148px;
   height: 2.5rem;
@@ -1074,6 +1106,10 @@
     width: 100%;
   }
   .workspace-library-filters [data-slot="select-trigger"] {
+    width: 100%;
+    min-width: 0;
+  }
+  .workspace-filter-select {
     width: 100%;
     min-width: 0;
   }

@@ -11,7 +11,6 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { type KeyboardEvent, useState } from "react"
-import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +24,7 @@ import {
 } from "../../components/ui/alert-dialog"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardDescription, CardTitle } from "../../components/ui/card"
+import { notifyError, notifySuccess } from "../../lib/notify"
 import type { ResumeListItem as ResumeListItemData } from "../../server/domain/resume-service"
 import { deleteResume } from "../resume-editor/editor-api"
 
@@ -111,11 +111,11 @@ export function ResumeListItem({
               setIsDeleting(true)
               try {
                 await deleteResume(resume.id)
-                toast.success("简历已删除")
+                notifySuccess("简历已删除")
                 onDeleted?.(resume.id)
                 router.refresh()
               } catch (error) {
-                toast.error(error instanceof Error ? error.message : "删除简历失败")
+                notifyError(error instanceof Error ? error.message : "删除简历失败")
                 setIsDeleting(false)
               }
             }}

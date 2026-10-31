@@ -1,15 +1,16 @@
 import type { ReactNode } from "react"
-import { Toaster } from "../../components/ui/sonner"
+import { LazyToaster } from "../../components/ui/lazy-toaster"
 import "../../styles/workspace.css"
 
-// 工作台与公告管理使用 Toaster 提示操作结果。
+// 操作结果提示走按需加载：Toaster 与 sonner 都在 hydration 之后才挂载，
+// 首屏只留页面本身需要的脚本。
 export default function WorkspaceLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
     <>
       {children}
-      <Toaster position="top-center" richColors />
+      <LazyToaster position="top-center" richColors />
     </>
   )
 }
