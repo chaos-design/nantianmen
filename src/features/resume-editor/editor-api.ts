@@ -95,6 +95,12 @@ export async function loadResume(resumeId: string): Promise<EditableResume> {
   })
 }
 
+export async function duplicateResume(resumeId: string): Promise<EditableResume> {
+  return requestApi(`/api/resumes/${resumeId}/duplicate`, {
+    method: "POST",
+  })
+}
+
 export async function saveResume(input: {
   resumeId: string
   version: number
