@@ -190,6 +190,35 @@ export function assertWritableActor(actor: Actor): void {
   }
 }
 
+/**
+ * 普通账号创建类操作（新建、复制）共用的数量上限校验。
+ * 抽出为独立函数，避免 createResume 与 duplicateResume 各自维护
+ * 一份限额逻辑导致上限漂移。
+ */
+export async function assertResumeCreationAllowed(
+  repository: ResumeRepository,
+  actor: Actor,
+): Promise<void> {
+  if (actor.isAdmin) {
+    return
+  }
+  const ownedResumes = await repository.listResumesByOwner(actor.userId)
+  const ownedResumeCount = ownedResumes.filter(
+    (resume) => resume.id !== actor.previewResumeId,
+  ).length
+  if (ownedResumeCount >= maximumMemberResumeCount) {
+    throw new DomainError(
+      "RESUME_LIMIT_REACHED",
+      `普通账号最多创建 ${maximumMemberResumeCount} 份简历`,
+      409,
+      {
+        limit: maximumMemberResumeCount,
+        current: ownedResumeCount,
+      },
+    )
+  }
+}
+
 export class ResumeService {
   constructor(
     private readonly repository: ResumeRepository,
@@ -202,23 +231,7 @@ export class ResumeService {
     templateId?: unknown,
   ): Promise<{ resume: EditableResume }> {
     assertWritableActor(actor)
-    if (!actor.isAdmin) {
-      const ownedResumes = await this.repository.listResumesByOwner(actor.userId)
-      const ownedResumeCount = ownedResumes.filter(
-        (resume) => resume.id !== actor.previewResumeId,
-      ).length
-      if (ownedResumeCount >= maximumMemberResumeCount) {
-        throw new DomainError(
-          "RESUME_LIMIT_REACHED",
-          `普通账号最多创建 ${maximumMemberResumeCount} 份简历`,
-          409,
-          {
-            limit: maximumMemberResumeCount,
-            current: ownedResumeCount,
-          },
-        )
-      }
-    }
+    await assertResumeCreationAllowed(this.repository, actor)
     const validatedTemplateId = validateTemplateId(templateId)
     const document = validateDocument(
       initialDocument ?? createResumeDocument(validatedTemplateId),

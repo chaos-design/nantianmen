@@ -7,10 +7,12 @@ import type {
 } from "../repositories/resume-repository"
 import {
   type Actor,
+  assertResumeCreationAllowed,
   assertWritableActor,
   authorizeResume,
   canViewerReadTestResume,
   DomainError,
+  type EditableResume,
   isTestResume,
   type TestResumePolicy,
 } from "./resume-service"
@@ -353,6 +355,17 @@ function toImageAsset(record: ResumeAssetRecord, alt = ""): ResumeImageAsset {
   }
 }
 
+// 复制简历的新标题 = 源标题 + 「副本」，并按码点截断到 120，
+// 与 document.metadata.title（max 120）保持一致。
+const DUPLICATE_TITLE_SUFFIX = "副本"
+const DUPLICATE_TITLE_MAX = 120
+
+function buildDuplicateTitle(sourceTitle: string): string {
+  const chars = Array.from(sourceTitle)
+  const room = DUPLICATE_TITLE_MAX - DUPLICATE_TITLE_SUFFIX.length
+  return [...chars.slice(0, room), ...Array.from(DUPLICATE_TITLE_SUFFIX)].join("")
+}
+
 export interface AssetBinary {
   bytes: Uint8Array
   mimeType: SupportedImageMimeType
@@ -463,6 +476,127 @@ export class ResumeAssetService {
       await this.storage.delete(asset.storagePath)
     } catch {
       // Metadata deletion makes the asset unreachable; orphan cleanup can retry later.
+    }
+  }
+
+  /**
+   * 复制一份简历：生成新的简历记录（标题追加「副本」、新 publicSlug、归属当前
+   * 操作者），连同源简历的图片二进制与资源元数据一起复制，并同步 remap
+   * 文档中 resources 的资源 id，确保副本不出现图片断链。
+   *
+   * 复制的是「草稿 + 图片」，发布快照是源简历独立的不可变数据，副本不带发布
+   * 历史；因此副本创建后处于草稿未发布状态。
+   */
+  async duplicateResume(sourceResumeId: string, actor: Actor): Promise<EditableResume> {
+    await authorizeResume(this.repository, sourceResumeId, actor)
+    assertWritableActor(actor)
+    await assertResumeCreationAllowed(this.repository, actor)
+
+    const source = await this.repository.findResumeById(sourceResumeId)
+    if (!source) {
+      throw new DomainError("RESUME_NOT_FOUND", "简历不存在", 404)
+    }
+
+    const document = structuredClone(source.draftDocument)
+    document.metadata.title = buildDuplicateTitle(source.title)
+
+    // 记录每份资源的源 id，再生成副本新 id，保证后续能按源 id 查二进制。
+    const sourceAssetIds = document.resources.assets.map((asset) => asset.id)
+    const assetIdMapping = new Map<string, string>()
+    for (let index = 0; index < document.resources.assets.length; index += 1) {
+      const copiedAssetId = randomUUID()
+      assetIdMapping.set(sourceAssetIds[index], copiedAssetId)
+      document.resources.assets[index].id = copiedAssetId
+    }
+    // 图片位置通过 assetId 关联文档资源，同步换成副本资源 id。
+    for (const placement of document.resources.placements) {
+      const mappedId = assetIdMapping.get(placement.assetId)
+      if (mappedId) {
+        placement.assetId = mappedId
+      }
+    }
+
+    const newResumeId = randomUUID()
+    const createdRecord = await this.repository.createResume({
+      id: newResumeId,
+      ownerId: actor.userId,
+      title: document.metadata.title,
+      publicSlug: randomUUID().replaceAll("-", ""),
+      document,
+    })
+
+    // 逐个复制二进制与资源元数据；任一失败都回滚已产生的副本资源、
+    // 存储对象与简历记录，保证不留下半成品。
+    const sourceAssets = await this.repository.listAssetsByResumeId(sourceResumeId)
+    const sourceRecordById = new Map(sourceAssets.map((record) => [record.id, record]))
+    const copiedStoragePaths: string[] = []
+    const copiedAssetIds: string[] = []
+    try {
+      for (let index = 0; index < document.resources.assets.length; index += 1) {
+        const documentAsset = document.resources.assets[index]
+        const sourceRecord = sourceRecordById.get(sourceAssetIds[index])
+        if (!sourceRecord) {
+          // 源简历本就没有该图片二进制（历史断链），保留文档引用即可。
+          continue
+        }
+        const extension = mimeTypeExtensions[documentAsset.mimeType]
+        const storagePath = `${newResumeId}/${documentAsset.id}.${extension}`
+        const bytes = await this.storage.get(sourceRecord.storagePath)
+        await this.storage.put(storagePath, bytes, documentAsset.mimeType)
+        copiedStoragePaths.push(storagePath)
+        await this.repository.createAsset({
+          id: documentAsset.id,
+          resumeId: newResumeId,
+          storagePath,
+          assetType: "image",
+          mimeType: documentAsset.mimeType,
+          byteSize: bytes.byteLength,
+          originalName: sourceRecord.originalName,
+          width: sourceRecord.width,
+          height: sourceRecord.height,
+          createdAt: new Date().toISOString(),
+        })
+        copiedAssetIds.push(documentAsset.id)
+      }
+    } catch {
+      await this.rollbackDuplicate(newResumeId, copiedAssetIds, copiedStoragePaths)
+      throw new DomainError("RESUME_DUPLICATE_FAILED", "复制简历失败", 503)
+    }
+
+    return {
+      id: createdRecord.id,
+      title: createdRecord.title,
+      publicSlug: createdRecord.publicSlug,
+      document: structuredClone(createdRecord.draftDocument),
+      version: createdRecord.draftVersion,
+      published: Boolean(createdRecord.latestPublicationId),
+      updatedAt: createdRecord.updatedAt,
+    }
+  }
+
+  private async rollbackDuplicate(
+    newResumeId: string,
+    assetIds: string[],
+    storagePaths: string[],
+  ): Promise<void> {
+    for (const assetId of assetIds) {
+      try {
+        await this.repository.deleteAsset(assetId)
+      } catch {
+        // Metadata cleanup is best-effort; storage objects are still reclaimed below.
+      }
+    }
+    for (const storagePath of storagePaths) {
+      try {
+        await this.storage.delete(storagePath)
+      } catch {
+        // 对象存储清理失败由孤儿回收兜底，不阻断简历记录删除。
+      }
+    }
+    try {
+      await this.repository.deleteResume(newResumeId)
+    } catch {
+      throw new Error("RESUME_DUPLICATE_ROLLBACK_FAILED")
     }
   }
 

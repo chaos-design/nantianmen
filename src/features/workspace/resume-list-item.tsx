@@ -3,6 +3,7 @@
 import {
   BracesIcon,
   CheckIcon,
+  CopyIcon,
   EyeIcon,
   PencilLineIcon,
   Share2Icon,
@@ -24,9 +25,10 @@ import {
 } from "../../components/ui/alert-dialog"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardDescription, CardTitle } from "../../components/ui/card"
+import { Spinner } from "../../components/ui/spinner"
 import { notifyError, notifySuccess } from "../../lib/notify"
 import type { ResumeListItem as ResumeListItemData } from "../../server/domain/resume-service"
-import { deleteResume } from "../resume-editor/editor-api"
+import { deleteResume, duplicateResume } from "../resume-editor/editor-api"
 
 interface ResumeListItemProps {
   resume: ResumeListItemData
@@ -51,6 +53,7 @@ export function ResumeListItem({
 }: ResumeListItemProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDuplicating, setIsDuplicating] = useState(false)
   const ownerLabel =
     resume.ownerId === currentUserId
       ? "本人"
@@ -62,6 +65,22 @@ export function ResumeListItem({
 
   function toggleSelection() {
     onSelectedChange?.(!selected)
+  }
+
+  async function handleDuplicate() {
+    if (isDuplicating) {
+      return
+    }
+    setIsDuplicating(true)
+    try {
+      const duplicate = await duplicateResume(resume.id)
+      notifySuccess(`已创建「${duplicate.title}」`)
+      router.refresh()
+    } catch (error) {
+      notifyError(error instanceof Error ? error.message : "复制简历失败")
+    } finally {
+      setIsDuplicating(false)
+    }
   }
 
   function handleCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -125,6 +144,24 @@ export function ResumeListItem({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  )
+
+  const duplicateAction = readOnly ? null : (
+    <Button
+      className="workspace-resume-action"
+      data-action="duplicate"
+      variant="ghost"
+      size="xs"
+      disabled={isDuplicating}
+      onClick={handleDuplicate}
+      aria-label={`复制${resume.title}`}
+      title="复制简历"
+    >
+      <span className="workspace-resume-action-icon">
+        {isDuplicating ? <Spinner /> : <CopyIcon />}
+      </span>
+      <span>复制</span>
+    </Button>
   )
 
   const shareAction = resume.published ? (
@@ -306,6 +343,7 @@ export function ResumeListItem({
                   <span>预览</span>
                 </Link>
               </Button>
+              {duplicateAction}
               {shareAction}
               {deleteAction}
             </>

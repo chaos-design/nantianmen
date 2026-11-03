@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import { maximumMemberResumeCount } from "../../shared/resume-schema/resume-policy"
 import { InMemoryResumeAssetStorage } from "../assets/in-memory-resume-asset-storage"
 import type { ResumeAssetRecord } from "../repositories/resume-repository"
 import { InMemoryResumeRepository } from "../repositories/resume-repository"
@@ -543,5 +544,159 @@ describe("ResumeAssetService", () => {
     await expect(
       assetService.getPublicAsset(publicSlug, asset.id, adminActor),
     ).resolves.toMatchObject({ mimeType: "image/png" })
+  })
+})
+
+describe("ResumeAssetService.duplicateResume", () => {
+  it("copies the draft and image assets with remapped ids, keeping the source intact", async () => {
+    const { assetService, resumeService, repository, storage } = createServices()
+    const created = await resumeService.createResume(actor)
+    const asset = await assetService.uploadAsset({
+      resumeId: created.resume.id,
+      actor,
+      originalName: "portrait.png",
+      providedMimeType: "image/png",
+      bytes: pngBytes,
+    })
+    const withDocument = await resumeService.saveDraft({
+      resumeId: created.resume.id,
+      actor,
+      expectedVersion: 1,
+      document: {
+        ...created.resume.document,
+        resources: {
+          assets: [asset],
+          placements: [
+            {
+              id: "placement-1",
+              assetId: asset.id,
+              pageIndex: 0,
+              x: 32,
+              y: 32,
+              width: 144,
+              height: 144,
+              zIndex: 1,
+              objectFit: "cover",
+              shape: "circle",
+            },
+          ],
+        },
+      },
+    })
+
+    const duplicate = await assetService.duplicateResume(created.resume.id, actor)
+
+    // 新记录：新 id、归属操作者、标题加「副本」、处于未发布草稿状态。
+    expect(duplicate.id).not.toBe(created.resume.id)
+    expect(duplicate.publicSlug).not.toBe(created.resume.publicSlug)
+    expect(duplicate.title).toBe(`${withDocument.title}副本`)
+    expect(duplicate.published).toBe(false)
+    expect(duplicate.version).toBe(1)
+
+    // 副本图片资源 id 被 remap，且二进制确实落到副本目录下。
+    const copiedAsset = duplicate.document.resources.assets[0]
+    const copiedPlacement = duplicate.document.resources.placements[0]
+    expect(copiedAsset).toBeDefined()
+    expect(copiedAsset.id).not.toBe(asset.id)
+    expect(copiedPlacement.assetId).toBe(copiedAsset.id)
+    const copiedRecord = await repository.listAssetsByResumeId(duplicate.id)
+    expect(copiedRecord).toHaveLength(1)
+    expect(copiedRecord[0].id).toBe(copiedAsset.id)
+    expect(copiedRecord[0].resumeId).toBe(duplicate.id)
+    await expect(storage.get(copiedRecord[0].storagePath)).resolves.toEqual(pngBytes)
+    // 副本图片可按自身 resumeId 读取，不再依赖源简历。
+    await expect(
+      assetService.getPrivateAsset(duplicate.id, copiedAsset.id, actor),
+    ).resolves.toMatchObject({ bytes: pngBytes, mimeType: "image/png" })
+
+    // 源简历保持原样：资源 id 不变，图片仍可读取。
+    const sourceAssets = await repository.listAssetsByResumeId(created.resume.id)
+    expect(sourceAssets.map((entry) => entry.id)).toEqual([asset.id])
+    await expect(
+      assetService.getPrivateAsset(created.resume.id, asset.id, actor),
+    ).resolves.toMatchObject({ bytes: pngBytes })
+  })
+
+  it("duplicates a resume without image assets", async () => {
+    const { assetService, resumeService } = createServices()
+    const created = await resumeService.createResume(actor)
+
+    const duplicate = await assetService.duplicateResume(created.resume.id, actor)
+
+    expect(duplicate.id).not.toBe(created.resume.id)
+    expect(duplicate.title).toBe(`${created.resume.title}副本`)
+    expect(duplicate.document.resources.assets).toEqual([])
+    expect(duplicate.document.resources.placements).toEqual([])
+    // 其余内容与源一致。
+    expect(duplicate.document.profile).toEqual(created.resume.document.profile)
+  })
+
+  it("denies duplicate to another owner and keeps Preview read-only", async () => {
+    const { assetService, resumeService } = createServices()
+    const created = await resumeService.createResume(actor)
+
+    await expect(
+      assetService.duplicateResume(created.resume.id, otherActor),
+    ).rejects.toMatchObject({ code: "RESUME_NOT_FOUND", status: 404 })
+
+    const previewActor: Actor = {
+      ...actor,
+      mode: "preview",
+      previewResumeId: created.resume.id,
+    }
+    await expect(
+      assetService.duplicateResume(created.resume.id, previewActor),
+    ).rejects.toMatchObject({ code: "PREVIEW_READ_ONLY", status: 403 })
+  })
+
+  it("rolls back the copy when an asset write fails", async () => {
+    const { assetService, repository, resumeService } = createServices()
+    const created = await resumeService.createResume(actor)
+    const asset = await assetService.uploadAsset({
+      resumeId: created.resume.id,
+      actor,
+      originalName: "portrait.png",
+      providedMimeType: "image/png",
+      bytes: pngBytes,
+    })
+    await resumeService.saveDraft({
+      resumeId: created.resume.id,
+      actor,
+      expectedVersion: 1,
+      document: {
+        ...created.resume.document,
+        resources: { assets: [asset], placements: [] },
+      },
+    })
+
+    vi.spyOn(repository, "createAsset").mockRejectedValueOnce(
+      new Error("metadata unavailable"),
+    )
+    await expect(
+      assetService.duplicateResume(created.resume.id, actor),
+    ).rejects.toMatchObject({ code: "RESUME_DUPLICATE_FAILED", status: 503 })
+
+    // 回滚后：列表里不应出现副本简历（createResume 回滚删除），源简历仍在。
+    const listed = await resumeService.listResumes(actor)
+    expect(listed.map((entry) => entry.id)).toEqual([created.resume.id])
+    await expect(repository.findAssetById(asset.id)).resolves.not.toBeNull()
+  })
+
+  it("respects the regular account resume limit on duplicate", async () => {
+    const { assetService, resumeService } = createServices()
+    for (let index = 0; index < maximumMemberResumeCount; index += 1) {
+      await resumeService.createResume(actor)
+    }
+    const created = (await resumeService.listResumes(actor))[0]
+
+    await expect(assetService.duplicateResume(created.id, actor)).rejects.toMatchObject(
+      {
+        code: "RESUME_LIMIT_REACHED",
+        status: 409,
+      },
+    )
+    // 管理员不受限制。
+    const adminCopy = await assetService.duplicateResume(created.id, adminActor)
+    expect(adminCopy.title).toBe(`${created.title}副本`)
   })
 })
